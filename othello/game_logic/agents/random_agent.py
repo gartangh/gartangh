@@ -1,5 +1,7 @@
 import random
 
+from typing import List, Tuple
+
 from game_logic.agents.agent import Agent
 from game_logic.board import Board
 from utils.color import Color
@@ -14,7 +16,7 @@ class RandomAgent(Agent):
 		return f'{self.name}{super().__str__()}'
 
 	def get_next_action(self, board: Board, legal_directions: dict) -> tuple:
-		location: tuple = random.choice(list(legal_directions.keys()))
-		legal_directions: list = legal_directions[location]
+		location: Tuple[int, int] = random.choice(list(legal_directions.keys()))
+		legal_directions: List[Tuple[int, int]] = legal_directions[location]
 
 		return location, legal_directions

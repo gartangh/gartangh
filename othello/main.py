@@ -1,4 +1,5 @@
 from game_logic.agents.agent import Agent
+from game_logic.agents.risk_regions_agent import RiskRegionsAgent
 from utils.color import Color
 from colorama import init
 from termcolor import colored
@@ -52,7 +53,7 @@ if __name__ == "__main__":
 	# initialize global variables
 	board_size: int = 8  # the size of the board e.g. 8x8
 	black: Agent = MinimaxAgent(color=Color.BLACK, immediate_reward=MinimaxHeuristic(board_size))  # the black agent
-	white: Agent = RandomAgent(color=Color.WHITE)  # the white agent
+	white: Agent = RiskRegionsAgent(color=Color.WHITE)  # the white agent
 	num_episodes: int = 100  # the number of episodes e.g. 100
 	verbose: bool = False  # wetter or not to print intermediate steps
 
