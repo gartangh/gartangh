@@ -23,7 +23,7 @@ class RiskRegionsAgent(Agent):
 		best_locations: List[Tuple[int, int]] = []
 		best_score: None = None
 
-		for location in list(legal_actions.keys()):
+		for location in legal_actions:
 			score: int = self._weights[location]
 			if best_score is None or score > best_score:
 				best_score: int = score
