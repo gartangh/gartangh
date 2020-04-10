@@ -67,6 +67,9 @@ if __name__ == "__main__":
 	white.set_train_mode(True)
 	main()
 
+	black.final_save()
+	white.final_save()
+
 	# let the white agent play against a RandomAgent or a MinimaxAgent
 	num_episodes: int = 50  # the number of episodes e.g. 100
 	black.num_games_won = 0  # reset black agent
