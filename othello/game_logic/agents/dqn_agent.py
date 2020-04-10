@@ -249,4 +249,4 @@ class DQNAgent(TrainableAgent):
 		self.n_steps = values["n_steps"]
 		self.n_episodes = values["n_episodes"]
 
-		print(self.training_policy.decisions_made, self.n_training_cycles, self.n_steps, self.n_episodes)
+		print("WEIGHTS HAVE BEEN LOADED -> CONTINUING TRAINING")
