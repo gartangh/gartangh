@@ -1,8 +1,10 @@
 import numpy as np
 import os
+import pickle
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+import tensorflow as tf
 
 from game_logic.agents.trainable_agent import TrainableAgent
 from game_logic.board import Board
@@ -44,7 +46,7 @@ class DQNAgent(TrainableAgent):
 		# save the weights of action_value_network periodically, i.e. when
 		# self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 		self.persist_weights_every_n_times_trained: int = int(1e3)
-		self.weight_persist_path: str = 'network_weights/'
+		self.weight_persist_path: str = 'network_weights/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
 		if not os.path.exists(self.weight_persist_path):
 			os.makedirs(self.weight_persist_path)
 
@@ -55,6 +57,8 @@ class DQNAgent(TrainableAgent):
 		self.n_training_cycles: int = 0
 		self.n_steps: int = 0
 		self.n_episodes: int = 0
+
+		self.load_weights()
 
 	def __str__(self):
 		return f'DQN{super().__str__()}'
@@ -176,11 +180,19 @@ class DQNAgent(TrainableAgent):
 			path: str = '{}/weights_agent_{}.h5f'.format(self.weight_persist_path, name)
 			self.action_value_network.save_weights(path, overwrite=True)
 
-			path: str = 'replay_buffers'
+			path: str = 'replay_buffers/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
 			if not os.path.exists(path):
 				os.makedirs(path)
 			file_path: str = os.path.join(path, 'replay_buffer_agent_{}.pkl'.format(name))
 			self.replay_buffer.persist(file_path)
+
+			path_values: str = 'hyper_values/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
+			path_values = os.path.join(path_values, "vals_{}.pkl".format(name))
+			values = {"decisions_made": self.training_policy.decisions_made,
+			          "n_training_cycles": self.n_training_cycles,
+			          "n_steps": self.n_steps,
+			          "n_episodes": self.n_episodes}
+			pickle.dump(values, open(path_values, "wb"))
 
 	def final_save(self) -> None:
 		name = "FINAL_"
@@ -189,9 +201,45 @@ class DQNAgent(TrainableAgent):
 		path: str = '{}/weights_agent_{}.h5f'.format(self.weight_persist_path, name)
 		self.action_value_network.save_weights(path, overwrite=True)
 
-		path: str = 'replay_buffers'
+		path: str = 'replay_buffers/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
 		if not os.path.exists(path):
 			os.makedirs(path)
 		file_path: str = os.path.join(path, 'replay_buffer_agent_{}.pkl'.format(name))
 		self.replay_buffer.persist(file_path)
 
+		path_values: str = 'hyper_values/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
+		path_values = os.path.join(path_values, "vals_{}.pkl".format(name))
+		values = {"decisions_made": self.training_policy.decisions_made,
+		          "n_training_cycles": self.n_training_cycles,
+		          "n_steps": self.n_steps,
+		          "n_episodes": self.n_episodes}
+		pickle.dump(values, open(path_values, "wb"))
+
+	def load_weights(self, file_name=None) -> None:
+		path = "replay_buffers/" + ("BLACK" if self.color == Color.BLACK else "WHITE")
+		path_values = "hyper_values/" + ("BLACK" if self.color == Color.BLACK else "WHITE")
+		if file_name is None:
+			path_network = tf.train.latest_checkpoint(self.weight_persist_path)
+			name = os.path.basename(path_network)
+			name = name.replace(".h5f", ".pkl")
+			path_replay = name.replace("weights_agent_", "replay_buffer_agent_")
+			path_replay = os.path.join(path, path_replay)
+
+			path_vals = name.replace("weights_agent_", "vals_")
+			path_vals = os.path.join(path_values, path_vals)
+		else:
+			path_network = os.path.join(self.weight_persist_path, "weights_agent_" + file_name + ".h5f")
+			path_replay = os.path.join(path, "replay_buffer_agent_" + file_name + ".pkl")
+			path_vals = os.path.join(path_values, "vals_" + file_name + ".pkl")
+
+		self.action_value_network.load_weights(path_network)  # loading in the action value network weights
+		self.update_target_network()  # setting the same weights into the target network
+
+		self.replay_buffer.load(path_replay)
+
+		values = pickle.load(open(path_values, 'rb'))
+
+		self.training_policy.decisions_made = values["decisions_made"]
+		self.n_training_cycles = values["n_training_cycles"]
+		self.n_steps = values["n_steps"]
+		self.n_episodes = values["n_episodes"]
