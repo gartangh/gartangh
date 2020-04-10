@@ -69,7 +69,7 @@ class Board:
 			action_key4 = keys4[chosen_play4]
 			self.take_action(action_key4, actions4[action_key4], Color.WHITE.value)
 
-			if board_usage is not None and board_usage < self.change_board_after_n_plays: board_usage += 1
+			if board_usage is not None and board_usage < self.change_board_after_n_plays - 1: board_usage += 1
 			else:
 				if chosen_play4 + 1 < len(keys4): chosen_play4 += 1
 				elif chosen_play3 + 1 < len(keys3): chosen_play3 += 1; chosen_play4 = 0

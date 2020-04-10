@@ -9,7 +9,7 @@ from utils.color import Color
 
 
 class Game:
-	def __init__(self, episode: int, black: Agent, white: Agent, board_size: int, verbose: bool):
+	def __init__(self, episode: int, black: Agent, white: Agent, board_size: int, verbose: bool, tournament_mode: bool = False):
 		# check arguments
 		assert black.color is Color.BLACK, f'Invalid black agent'
 		assert white.color is Color.WHITE, f'Invalid white agent'
@@ -17,7 +17,7 @@ class Game:
 		self.episode: int = episode
 		self.black: Agent = black
 		self.white: Agent = white
-		self.board: Board = Board(board_size)  # create a new board
+		self.board: Board = Board(board_size) if not tournament_mode else Board(board_size, change_board_after_n_plays=1) # create a new board
 		self.verbose: bool = verbose
 
 		# state of the game
