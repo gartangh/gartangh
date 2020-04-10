@@ -237,7 +237,7 @@ class DQNAgent(TrainableAgent):
 
 		self.replay_buffer.load(path_replay)
 
-		values = pickle.load(open(path_values, 'rb'))
+		values = pickle.load(open(path_vals, 'rb'))
 
 		self.training_policy.decisions_made = values["decisions_made"]
 		self.n_training_cycles = values["n_training_cycles"]
