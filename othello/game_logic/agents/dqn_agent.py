@@ -12,6 +12,8 @@ from utils.policies.annealing_epsilon_greedy_policy import AnnealingEpsilonGreed
 from utils.policies.epsilon_greedy_policy import EpsilonGreedyPolicy
 from utils.policies.random_policy import RandomPolicy
 
+import datetime
+
 
 class DQNAgent(TrainableAgent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8):
@@ -41,7 +43,7 @@ class DQNAgent(TrainableAgent):
 
 		# save the weights of action_value_network periodically, i.e. when
 		# self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
-		self.persist_weights_every_n_times_trained: int = int(10e3)
+		self.persist_weights_every_n_times_trained: int = int(10e1)
 		self.weight_persist_path: str = 'network_weights/'
 		if not os.path.exists(self.weight_persist_path):
 			os.makedirs(self.weight_persist_path)
@@ -169,11 +171,12 @@ class DQNAgent(TrainableAgent):
 
 	def _persist_weights_if_necessary(self) -> None:
 		if self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
-			path: str = '{}/weights_agent_{}.h5f'.format(self.weight_persist_path, self.name)
+			name = datetime.datetime.now().strftime("%y%m%d%H%M%S")
+			path: str = '{}/weights_agent_{}.h5f'.format(self.weight_persist_path, name)
 			self.action_value_network.save_weights(path, overwrite=True)
 
 			path: str = 'replay_buffers'
 			if not os.path.exists(path):
 				os.makedirs(path)
-			file_path: str = os.path.join(path, 'replay_buffer_agent_{}.pkl'.format(self.name))
+			file_path: str = os.path.join(path, 'replay_buffer_agent_{}.pkl'.format(name))
 			self.replay_buffer.persist(file_path)
