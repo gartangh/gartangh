@@ -187,6 +187,8 @@ class DQNAgent(TrainableAgent):
 			self.replay_buffer.persist(file_path)
 
 			path_values: str = 'hyper_values/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
+			if not os.path.exists(path_values):
+				os.makedirs(path_values)
 			path_values = os.path.join(path_values, "vals_{}.pkl".format(name))
 			values = {"decisions_made": self.training_policy.decisions_made,
 			          "n_training_cycles": self.n_training_cycles,
@@ -208,6 +210,8 @@ class DQNAgent(TrainableAgent):
 		self.replay_buffer.persist(file_path)
 
 		path_values: str = 'hyper_values/' + ("BLACK" if self.color == Color.BLACK else "WHITE")
+		if not os.path.exists(path_values):
+			os.makedirs(path_values)
 		path_values = os.path.join(path_values, "vals_{}.pkl".format(name))
 		values = {"decisions_made": self.training_policy.decisions_made,
 		          "n_training_cycles": self.n_training_cycles,
@@ -220,6 +224,7 @@ class DQNAgent(TrainableAgent):
 		path_values = "hyper_values/" + ("BLACK" if self.color == Color.BLACK else "WHITE")
 		if file_name is None:
 			path_network = tf.train.latest_checkpoint(self.weight_persist_path)
+			if path_network is None: return
 			name = os.path.basename(path_network)
 			name = name.replace(".h5f", ".pkl")
 			path_replay = name.replace("weights_agent_", "replay_buffer_agent_")
@@ -243,3 +248,5 @@ class DQNAgent(TrainableAgent):
 		self.n_training_cycles = values["n_training_cycles"]
 		self.n_steps = values["n_steps"]
 		self.n_episodes = values["n_episodes"]
+
+		print(self.training_policy.decisions_made, self.n_training_cycles, self.n_steps, self.n_episodes)

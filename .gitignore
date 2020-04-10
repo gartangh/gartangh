@@ -131,6 +131,7 @@ dmypy.json
 # Output directories
 othello/network_weights/
 othello/replay_buffers/
+othello/hyper_values/
 
 #pycharm
 .idea/
