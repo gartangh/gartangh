@@ -33,8 +33,8 @@ class MinimaxAgent(Agent):
 		return ended, won
 
 	def minimax(self, board: Board, color_value: int, legal_actions: Dict[Tuple[int, int], List[Tuple[int, int]]],
-				level: int = 0,
-				prev_best_points: float = None) -> Tuple[float, Tuple[int, int]]:
+	            level: int = 0,
+	            prev_best_points: float = None) -> Tuple[float, Tuple[int, int]]:
 		cur_best_score: None = None
 		cur_best_location: None = None
 		opponent_color_value: int = 1 - color_value
@@ -50,7 +50,8 @@ class MinimaxAgent(Agent):
 						color_value)
 					points, _ = self.minimax(new_board, color_value, new_legal_actions, level + 1, cur_best_score)
 				else:  # opponent plays next ply
-					points, _ = self.minimax(new_board, opponent_color_value, new_legal_actions, level + 1, cur_best_score)
+					points, _ = self.minimax(new_board, opponent_color_value, new_legal_actions, level + 1,
+					                         cur_best_score)
 			else:
 				points: float = self.immediate_reward.immediate_reward(new_board, color_value)
 

@@ -1,15 +1,14 @@
 import numpy as np
-from game_logic.agents.dqn_agent import DQNAgent
-from utils.color import Color
-from utils.immediate_rewards.immediate_reward import ImmediateReward
-from utils.policies.annealing_epsilon_greedy_policy import AnnealingEpsilonGreedyPolicy
-
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 
+from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
+from utils.color import Color
+from utils.immediate_rewards.immediate_reward import ImmediateReward
 
-class JaimeAgent(DQNAgent):
+
+class JaimeDQNTrainableAgent(DQNTrainableAgent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8):
 		super().__init__(color, immediate_reward, board_size)
 

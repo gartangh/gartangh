@@ -1,7 +1,7 @@
 import random
+from typing import List, Tuple
 
 import numpy as np
-from typing import List, Tuple
 
 from game_logic.agents.agent import Agent
 from game_logic.board import Board

@@ -6,8 +6,6 @@ import shutil
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
 
 from game_logic.agents.trainable_agent import TrainableAgent
 from game_logic.board import Board
@@ -17,9 +15,9 @@ from utils.policies.annealing_epsilon_greedy_policy import AnnealingEpsilonGreed
 from utils.policies.epsilon_greedy_policy import EpsilonGreedyPolicy
 
 
-class DQNAgent(TrainableAgent):
+class DQNTrainableAgent(TrainableAgent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8,
-	             load_old_weights: bool = False):
+	             load_old_weights: bool = False) -> None:
 		super().__init__(color, immediate_reward, board_size)
 		self.epsilon: float = 0.01
 		self.discount_factor: float = 1.0
@@ -39,33 +37,15 @@ class DQNAgent(TrainableAgent):
 		# Bookkeeping values
 		self.n_training_cycles: int = 0
 
-	def __str__(self):
+	def __str__(self) -> str:
 		return f'DQN{super().__str__()}'
 
-	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
-		# input: 2 nodes per board location:
-		#              - 1 node that is 0 if location does not contain black, else 1
-		#              - 1 node that is 0 if location does not contain white, else 1
-		# output: 1 node per board location, with probabilities to take action on that location
-		model: Sequential = Sequential()
-		model.add(Dense(2 * self.board_size ** 2, input_shape=(2 * self.board_size ** 2,), activation='relu',
-		                kernel_initializer='he_uniform'))
-		model.add(Dense(2 * self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'))
-		model.add(Dense(2 * self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'))
-		model.add(Dense(2 * self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'))
-		model.add(Dense(2 * self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'))
-		model.add(Dense(2 * self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'))
-		model.add(Dense(self.board_size ** 2, activation='softmax'))
-		model.compile(loss='mean_squared_error', optimizer=Adam(lr=lr))
+	def train(self, persist_weights: bool = False) -> None:
+		assert self.train_mode is True, 'Cannot train while not in train mode'
 
-		return model
-
-	def train(self):
-		assert (self.train_mode is True)
 		self.n_training_cycles += 1
 
 		states = np.array([self.board_to_nn_input(move[0]) for move in self.replay_buffer.buffer])
-		states = states.reshape((states.shape[0], states.shape[2]))  # from (x,1,y) to (x,y)
 		# the goal is to update these old_q_values
 		old_q_values = self.action_value_network.predict(states)
 
@@ -94,13 +74,11 @@ class DQNAgent(TrainableAgent):
 		# train the NN on the now updated q_values
 		self.action_value_network.train_on_batch(states, old_q_values)
 
-		if self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
+		if persist_weights and self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 			self._persist_weights()
 
-		return
-
 	def get_next_action(self, board: Board, legal_actions: dict) -> tuple:
-		if self.train_mode is True:
+		if self.train_mode:
 			action = self.training_policy.get_action(self.board_to_nn_input(board.board), self.action_value_network,
 			                                         legal_actions)
 		else:
@@ -110,25 +88,22 @@ class DQNAgent(TrainableAgent):
 		return action, legal_actions[action]
 
 	def _persist_weights(self, prefix: str = '') -> None:
-		color = 'BLACK' if self.color == Color.BLACK else 'WHITE'
-		print('Persisting weights of ', self.__str__(), color)
-
 		# clean and remake the folders
-		weights_path: str = 'network_weights/' + color
+		weights_path: str = 'network_weights/' + self.color.name
 		if os.path.exists(weights_path):
 			shutil.rmtree(weights_path)  # clear the directory
 		os.makedirs(weights_path)
-		buffer_path: str = 'replay_buffers/' + color
+		buffer_path: str = 'replay_buffers/' + self.color.name
 		if os.path.exists(buffer_path):
 			shutil.rmtree(buffer_path)  # clear the directory
 		os.makedirs(buffer_path)
-		hyperpar_path: str = 'hyper_values/' + color
+		hyperpar_path: str = 'hyper_values/' + self.color.name
 		if os.path.exists(hyperpar_path):
 			shutil.rmtree(hyperpar_path)  # clear the directory
 		os.makedirs(hyperpar_path)
 
 		# save the values
-		col_time = prefix + color + datetime.datetime.now().strftime('%y%m%d%H%M%S')
+		col_time = prefix + self.color.name + datetime.datetime.now().strftime('%y%m%d%H%M%S')
 		path: str = '{}/weights_agent_{}.h5'.format(weights_path, col_time)
 		self.action_value_network.save(path, overwrite=True)
 
@@ -179,3 +154,9 @@ class DQNAgent(TrainableAgent):
 		self.n_training_cycles = values['n_training_cycles']
 
 		print('WEIGHTS HAVE BEEN LOADED -> CONTINUING TRAINING')
+
+	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
+		raise NotImplementedError
+
+	def board_to_nn_input(self, board: np.ndarray) -> np.array:
+		raise NotImplementedError

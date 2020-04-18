@@ -10,7 +10,7 @@ class Agent:
 		self.num_games_won: int = 0
 
 	def __str__(self):
-		return 'Agent'
+		return f'Agent: {self.color.name}'
 
 	def get_next_action(self, board: Board, legal_actions: dict) -> tuple:
 		raise NotImplementedError

@@ -32,6 +32,7 @@ class Board:
 		# check arguments
 		assert 4 <= board_size <= 12, f'Invalid board size: board_size should be between 4 and 12, but got {board_size}'
 		assert board_size % 2 == 0, f'Invalid board size: board_size should be even, but got {board_size}'
+
 		self.board_size: int = board_size
 		self.change_board_after_n_plays = change_board_after_n_plays
 		self.random_start = random_start
@@ -95,22 +96,24 @@ class Board:
 				board_usage = 0
 
 	def __str__(self):
-		string: str = '\t|'
+		string: str = '\t\t\u2502'
 		for j in range(self.board_size):
 			string += f'{j}\t'
-		string += '\n_\t|'
+		string += '\n\t\u2500\t\u2502'
 		for j in range(self.board_size):
-			string += '_\t'
+			string += '\u2500\t'
 		string += '\n'
 		for i, row in enumerate(self.board):
-			string += f'{i}\t|'
+			string += f'\t{i}\t\u2502'
 			for val in row:
-				if val == -1:
+				if val == Color.LEGAL.value:
+					string += u'\u274C\t'
+				elif val == Color.EMPTY.value:
 					string += ' \t'
-				elif val == 0:
-					string += 'B\t'
-				elif val == 1:
-					string += 'W\t'
+				elif val == Color.BLACK.value:
+					string += u'\u25CF\t'
+				elif val == Color.WHITE.value:
+					string += u'\u25CB\t'
 				else:
 					raise Exception(f'Incorrect value on board: expected 1, -1 or 0, but got {val}')
 			string += '\n'
