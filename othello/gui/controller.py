@@ -10,7 +10,7 @@ from utils.color import Color
 
 class Controller:
 	def __init__(self, game: Game):
-		self.game = game
+		self.game: Game = game
 		self.gui = None
 		self.legal_actions: dict = self.game.board.get_legal_actions(Color.WHITE.value)
 		self.prev_pass = False
@@ -43,7 +43,7 @@ class Controller:
 		else:
 			self.gui.close()  # closes window and starts new game if there are episodes left
 
-	def _convert_point_coord_to_move(self, pointx: int, pointy: int) -> None:
+	def _convert_point_coord_to_move(self, pointx: int, pointy: int) -> Tuple[int, int]:
 		row = int(pointy // self.gui.get_cell_height())
 		if row == self.gui.get_rows():
 			row -= 1
@@ -80,8 +80,8 @@ class Controller:
 					self._process_other_turn()
 
 	def _end_game(self):
-		self.game.black.update_final_score(self.game.board)
-		self.game.white.update_final_score(self.game.board)
+		self.game.config.black.update_final_score(self.game.board)
+		self.game.config.white.update_final_score(self.game.board)
 		# print end result
 		if self.game.board.num_black_disks > self.game.board.num_white_disks:
 			print(colored(

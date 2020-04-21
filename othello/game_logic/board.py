@@ -25,8 +25,6 @@ class Board:
 		(+1, -1),  # down left
 	]
 
-	# public methods
-	# constructor
 	def __init__(self, board_size: int = 8, random_start: bool = False, change_board_after_n_plays: int = 4):
 		global chosen_play1, chosen_play2, chosen_play3, chosen_play4, board_usage
 		# check arguments
@@ -77,21 +75,21 @@ class Board:
 				if chosen_play4 + 1 < len(keys4):
 					chosen_play4 += 1
 				elif chosen_play3 + 1 < len(keys3):
-					chosen_play3 += 1;
+					chosen_play3 += 1
 					chosen_play4 = 0
 				elif chosen_play2 + 1 < len(keys2):
-					chosen_play2 += 1;
-					chosen_play3 = 0;
+					chosen_play2 += 1
+					chosen_play3 = 0
 					chosen_play4 = 0
 				elif chosen_play1 + 1 < len(keys1):
-					chosen_play1 += 1;
-					chosen_play2 = 0;
-					chosen_play3 = 0;
+					chosen_play1 += 1
+					chosen_play2 = 0
+					chosen_play3 = 0
 					chosen_play4 = 0
 				else:
-					chosen_play1 = 0;
-					chosen_play2 = 0;
-					chosen_play3 = 0;
+					chosen_play1 = 0
+					chosen_play2 = 0
+					chosen_play3 = 0
 					chosen_play4 = 0
 				board_usage = 0
 
@@ -131,38 +129,37 @@ class Board:
 
 		return new_board
 
-	def get_disks(self):
-		return self.board
-
-	def get_board_size(self):
-		return self.board_size
-
-	def get_legal_actions(self, color_value: int) -> dict:
+	def get_legal_actions(self, color_value: int) -> Dict[Tuple[int, int], List[Tuple[int, int]]]:
 		return self._get_legal_actions(self.board, self.board_size, color_value)
 
-	def take_action(self, location: tuple, legal_directions: list, color_value: int) -> bool:
+	def take_action(self, location: Tuple[int, int], legal_directions: List[Tuple[int, int]], color_value: int) -> bool:
 		# check if location does point to an empty spot
-		assert self.board.item(
-			location) == -1, f'Invalid location: location ({location}) does not point to an empty spot on the board)'
+		assert self.board[location[0], location[
+			1]] == Color.EMPTY.value, f'Invalid location: location ({location}) does not point to an empty spot on the board)'
 
 		# save state before action
 		self.prev_board: np.array = np.copy(self.board)
 
 		# put down own disk in the provided location
-		i: int = location[0]
-		j: int = location[1]
-		self.board[i, j]: int = color_value
+		self.board[location[0], location[1]]: int = color_value
 
 		# turn around opponent's disks
 		for direction in legal_directions:
 			i: int = location[0] + direction[0]
 			j: int = location[1] + direction[1]
 			while 0 <= i < self.board_size and 0 <= j < self.board_size:
-				disk: int = self.board[i, j]
-				if disk == color_value or disk == Color.EMPTY.value:
-					break  # encountered empty spot or own disk
-				if disk == 1 - color_value:
-					self.board[i, j] = color_value  # encountered opponent's disk
+				if self.board[i, j] == Color.EMPTY.value:
+					# encountered empty spot
+					break
+
+				if self.board[i, j] == color_value:
+					# encountered own disk
+					break
+
+				if self.board[i, j] == 1 - color_value:
+					# encountered opponent's disk
+					self.board[i, j] = color_value
+
 				i += direction[0]
 				j += direction[1]
 
@@ -192,51 +189,59 @@ class Board:
 		self.num_free_spots: int = num_free_spots
 
 	def _is_game_finished(self) -> bool:
-		# return finished or not
-		if self.num_black_disks == 0 or self.num_white_disks == 0 or self.num_free_spots == 0:
+		# return whether or not game is finished
+		if self.num_free_spots == 0 or self.num_black_disks == 0 or self.num_white_disks == 0:
 			return True
-		else:
-			return False
+
+		return False
 
 	@staticmethod
-	def _get_legal_actions(board: np.array, board_size: int, color_value: int) -> dict:
+	def _get_legal_actions(board: np.array, board_size: int, color_value: int) -> Dict[
+		Tuple[int, int], List[Tuple[int, int]]]:
 		legal_actions: Dict[Tuple[int, int], List[Tuple[int, int]]] = {}
 		for i in range(board_size):
 			for j in range(board_size):
-				legal_directions: List[Tuple[int, int]] = Board._get_legal_directions(board, board_size, (i, j),
-				                                                                      color_value)
-				if len(legal_directions) > 0:
-					legal_actions[(i, j)]: list = legal_directions
+				if board[i, j] == Color.EMPTY.value:
+					# an empty spot
+					legal_directions: List[Tuple[int, int]] = Board._get_legal_directions(board, board_size, (i, j),
+					                                                                      color_value)
+					if len(legal_directions) > 0:
+						legal_actions[(i, j)]: List[Tuple[int, int]] = legal_directions
 
 		return legal_actions
 
 	@staticmethod
-	def _get_legal_directions(board: np.array, board_size: int, location: tuple, color_value: int) -> list:
+	def _get_legal_directions(board: np.array, board_size: int, location: tuple, color_value: int) -> List[
+		Tuple[int, int]]:
 		legal_directions: List[Tuple[int, int]] = []
 
 		# check if location points to an empty spot
-		if board.item(location) != -1:
-			return legal_directions
+		if board[location[0], location[1]] == Color.EMPTY.value:
+			# search in all directions
+			for direction in Board._directions:
+				found_opponent: bool = False
+				i: int = location[0] + direction[0]
+				j: int = location[1] + direction[1]
+				# while not out of the board, keep going in that direction
+				while 0 <= i < board_size and 0 <= j < board_size:
+					if board[i, j] == Color.EMPTY.value:
+						# found empty spot
+						break
 
-		# search in all directions
-		for direction in Board._directions:
-			found_opponent: bool = False  # check wetter there is an opponent's disk
-			i: int = location[0] + direction[0]
-			j: int = location[1] + direction[1]
-			while 0 <= i < board_size and 0 <= j < board_size:
-				# while not out of the board, keep going
-				disk: int = board[i, j]
-				if disk == -1 or (disk == color_value and not found_opponent):
-					break  # found empty spot or player's disk before finding opponent's disk
+					if board[i, j] == color_value and not found_opponent:
+						# found a player's disk before finding opponent's disk
+						break
 
-				if disk == 1 - color_value:
-					found_opponent: bool = True  # found opponent's disk
+					if board[i, j] == color_value and found_opponent:
+						# found own disk after finding opponent's disk
+						legal_directions.append(direction)
+						break
 
-				if disk == color_value and found_opponent:
-					legal_directions.append(direction)  # found own disk after finding opponent's disk
-					break
+					if board[i, j] == 1 - color_value:
+						# found opponent's disk
+						found_opponent: bool = True
 
-				i += direction[0]
-				j += direction[1]
+					i += direction[0]
+					j += direction[1]
 
 		return legal_directions

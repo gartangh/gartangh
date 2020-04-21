@@ -1,7 +1,6 @@
-import copy
-
 import numpy as np
 from termcolor import colored
+from typing import List, Tuple, Dict
 
 from game_logic.agents.agent import Agent
 from game_logic.agents.trainable_agent import TrainableAgent
@@ -40,7 +39,8 @@ class Game:
 				print(f'\tPly {self.ply}: {self.agent.color.name} {disk_icon}')
 
 			# get legal actions
-			legal_actions: dict = self.board.get_legal_actions(self.agent.color.value)
+			legal_actions: Dict[Tuple[int, int], List[Tuple[int, int]]] = self.board.get_legal_actions(
+				self.agent.color.value)
 
 			if not legal_actions:
 				# pass if no legal actions
@@ -56,7 +56,7 @@ class Game:
 				location, legal_directions = self.agent.get_next_action(self.board, legal_actions)
 				if self.config.verbose_live:
 					print(f'\tLegal actions: {list(legal_actions.keys())}')
-					board_copy: Board = copy.deepcopy(self.board)
+					board_copy: Board = self.board.get_deepcopy()
 					for legal_location in legal_actions:
 						board_copy.board[legal_location] = Color.LEGAL.value
 					print(board_copy)

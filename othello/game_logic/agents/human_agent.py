@@ -1,6 +1,8 @@
 import tkinter as tk
 from typing import List, Tuple
 
+import numpy as np
+
 from game_logic.agents.agent import Agent
 from game_logic.board import Board
 from utils.color import Color
@@ -8,15 +10,18 @@ from utils.color import Color
 
 class HumanAgent(Agent):
 	def __init__(self, color: Color):
+		assert color == Color.WHITE, f'Invalid color for HumanAgent: color must be WHITE, but got {color.name}'
+
 		super().__init__(color)
-		self.name: str = 'Human'
+
+		self.first_move = True
 
 	def __str__(self):
-		return f'{self.name}{super().__str__()}'
+		return f'Human{super().__str__()}'
 
 	def __update_board(self, board: Board, legal_directions: dict):
-		disks = board.get_disks()
-		board_size = board.get_board_size()
+		disks: np.array = board.board
+		board_size: int = board.board_size
 		if self.first_move:
 			for widget in self.frame.winfo_children():
 				widget.destroy()
