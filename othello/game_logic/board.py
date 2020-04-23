@@ -1,11 +1,11 @@
-from typing import Dict, List, Tuple
+import random
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
+from numpy.random import choice
 
 from utils.color import Color
 
-import random
-from numpy.random import choice
 
 class Board:
 	# initialize static variables
@@ -26,7 +26,6 @@ class Board:
 		assert board_size % 2 == 0, f'Invalid board size: board_size should be even, but got {board_size}'
 
 		self.board_size: int = board_size
-		self.random_start = random_start
 
 		# create board
 		board: np.array = -np.ones([board_size, board_size], dtype=int)
@@ -35,31 +34,38 @@ class Board:
 		board[board_size // 2 - 1, board_size // 2] = 0  # black
 		board[board_size // 2, board_size // 2] = 1  # white
 		self.board: np.array = board
-		self.prev_board: np.array = np.copy(board)
-		self.num_black_disks: int = 2
-		self.num_white_disks: int = 2
-		self.num_free_spots: int = board_size ** 2 - 4
 
-		# adding random start at 4 steps in future (W - B - W - B)
+		if random_start:
+			# 0, 1, or 2 plays (0, 2, or 4 plies)
+			num_plays: int = choice(3, 1, p=[0.2, 0.4, 0.4])[0]
 
-		if self.random_start:
-			nr_of_plies = (choice(3, 1, replace=False, p=[0.2, 0.4, 0.4])[0])
+		if not random_start or num_plays == 0:
+			self.num_black_disks: int = 2
+			self.num_white_disks: int = 2
 
-			for rand_ply in range(nr_of_plies):
-				rd_actions = self._get_legal_actions(self.board, self.board_size, Color.BLACK.value)
-				location: Tuple[int, int] = random.choice(list(rd_actions.keys()))
-				legal_directions: List[Tuple[int, int]] = rd_actions[location]
-				self.take_action(location, legal_directions, Color.BLACK.value)
+			self.prev_board: Union[np.array, None] = None
+		else:
+			# adding random start at 2 or 4 steps in future (B - W or B - W - B - W)
+			for play in range(num_plays):
+				legal_actions: Dict[Tuple[int, int], List[Tuple[int, int]]] = self._get_legal_actions(self.board,
+				                                                                                      self.board_size,
+				                                                                                      Color.BLACK.value)
+				location: Tuple[int, int] = random.choice(list(legal_actions.keys()))
+				directions: List[Tuple[int, int]] = legal_actions[location]
+				self.take_action(location, directions, Color.BLACK.value)
 
-				rd_actions = self._get_legal_actions(self.board, self.board_size, Color.WHITE.value)
-				location: Tuple[int, int] = random.choice(list(rd_actions.keys()))
-				legal_directions: List[Tuple[int, int]] = rd_actions[location]
-				self.take_action(location, legal_directions, Color.WHITE.value)
+				if play == num_plays - 1:
+					self.prev_board: np.array = np.copy(board)
 
-	def calculate_nr_plies(self):
-		num_black_disks: int = len(np.where(self.board == Color.BLACK.value)[0])
-		num_white_disks: int = len(np.where(self.board == Color.WHITE.value)[0])
-		return num_black_disks + num_white_disks - 4
+				legal_actions = self._get_legal_actions(self.board, self.board_size, Color.WHITE.value)
+				location: Tuple[int, int] = random.choice(list(legal_actions.keys()))
+				directions: List[Tuple[int, int]] = legal_actions[location]
+				self.take_action(location, directions, Color.WHITE.value)
+
+			self.num_black_disks: int = 2 + num_plays
+			self.num_white_disks: int = 2 + num_plays
+
+		self.num_free_spots: int = board_size ** 2 - self.num_black_disks - self.num_white_disks
 
 	def __str__(self):
 		string: str = '\t\t\u2502'
@@ -86,8 +92,7 @@ class Board:
 		return string
 
 	def get_deepcopy(self):
-		new_board = Board(self.board_size, False, self.change_board_after_n_plays)
-		new_board.random_start = self.random_start
+		new_board = Board(self.board_size, random_start=False)
 		new_board.num_black_disks = self.num_black_disks
 		new_board.num_white_disks = self.num_white_disks
 		new_board.num_free_spots = self.num_free_spots

@@ -6,7 +6,6 @@ from tqdm import tqdm
 from game_logic.agents.cnn_dqn_trainable_agent import CNNDQNTrainableAgent
 from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
 from game_logic.agents.human_agent import HumanAgent
-from game_logic.agents.minimax_agent import MinimaxAgent
 from game_logic.agents.random_agent import RandomAgent
 from game_logic.agents.risk_regions_agent import RiskRegionsAgent
 from game_logic.agents.trainable_agent import TrainableAgent
@@ -25,7 +24,7 @@ def main() -> None:
 	# agents
 	black = config.black
 	white = config.white
-	print(f'\nAgents:\n\tBlack:\t{black}\n\tWhite:\t{white}\n')
+	print(f'\nAgents:\n\t{black}\n\t{white}\n')
 
 	win_rates = [0.0]
 	if isinstance(black, DQNTrainableAgent):
@@ -216,12 +215,12 @@ if __name__ == '__main__':
 		train_black=True,
 		white=RandomAgent(Color.WHITE),
 		train_white=False,
-		num_episodes=500,
-		plot_win_ratio=True,
-		plot_win_ratio_live=True,
-		verbose=False,
-		verbose_live=False,
-		tournament_mode=False,
+		num_episodes=1,
+		plot_win_ratio=False,
+		plot_win_ratio_live=False,
+		verbose=True,
+		verbose_live=True,
+		random_start=True,
 	)
 	main()
 
@@ -236,7 +235,7 @@ if __name__ == '__main__':
 		plot_win_ratio_live=False,
 		verbose=True,
 		verbose_live=False,
-		tournament_mode=False,
+		random_start=False,
 	)
 	main()
 
@@ -251,6 +250,6 @@ if __name__ == '__main__':
 		plot_win_ratio_live=False,
 		verbose=True,
 		verbose_live=False,
-		tournament_mode=False,
+		random_start=False,
 	)
 	main()
