@@ -8,8 +8,7 @@ from utils.color import Color
 class Config:
 	def __init__(self, black: Agent, train_black: bool, white: Agent, train_white: bool, num_episodes: int,
 	             plot_win_ratio: bool = True, plot_win_ratio_live: bool = False, verbose: bool = False,
-	             verbose_live: bool = False, random_start: bool = False,
-	             train_all_agents: bool = False) -> None:
+	             verbose_live: bool = False, random_start: bool = False) -> None:
 		# check parameters
 		assert black.color is Color.BLACK, f'Invalid black agent: black agent\'s color is not black'
 		if not isinstance(black, TrainableAgent):
@@ -35,9 +34,8 @@ class Config:
 		self.verbose: bool = verbose
 		self.verbose_live: bool = verbose_live
 		self.random_start: bool = random_start
-		self.train_all_agents: bool = train_all_agents
 
-		self.plot_every_n_episodes: int = ceil(self.num_episodes / 100)
+		self.plot_every_n_episodes: int = ceil(self.num_episodes / 20)
 
 		self.black.num_games_won = 0
 		if isinstance(black, TrainableAgent):

@@ -1,19 +1,21 @@
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras import Input
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Conv2D, Dense
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import GlobalAveragePooling2D
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import Input
-import tensorflow as tf
-
-if 0:
-    physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    tf.config.optimizer.set_jit(True)  # XLA enabled
 
 from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
 from utils.reshapes import split
+
+try:
+	physical_devices = tf.config.experimental.list_physical_devices('GPU')
+	tf.config.experimental.set_memory_growth(physical_devices[0], True)
+	tf.config.optimizer.set_jit(True)  # XLA enabled
+except:
+	pass
 
 
 class CNNDQNTrainableAgent(DQNTrainableAgent):
