@@ -16,6 +16,7 @@ class AnnealingEpsilonGreedyPolicy(Policy):
         self.allow_exploration = allow_exploration
         self.curr_eps = start_eps
 
+
     def __str__(self):
         return f'AnnealingEpsilonGreedy{super().__str__()}'
     
@@ -48,3 +49,4 @@ class AnnealingEpsilonGreedyPolicy(Policy):
         b = float(self.start_eps)
         value = max(self.end_eps, a * float(self.decisions_made) + b)
         return value
+
