@@ -28,6 +28,7 @@ class Game:
 			print(f'Episode {self.episode}:')
 			print(f'\tPly {self.ply}: INIT')
 			print(self.board)
+        
 
 		# play until done
 		while not self.done:
