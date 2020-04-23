@@ -4,13 +4,8 @@ import numpy as np
 
 from utils.color import Color
 
-# static values shared across boards
-board_usage = None
-chosen_play1 = 0
-chosen_play2 = 0
-chosen_play3 = 0
-chosen_play4 = 0
-
+import random
+from numpy.random import choice
 
 class Board:
 	# initialize static variables
@@ -25,14 +20,12 @@ class Board:
 		(+1, -1),  # down left
 	]
 
-	def __init__(self, board_size: int = 8, random_start: bool = False, change_board_after_n_plays: int = 4):
-		global chosen_play1, chosen_play2, chosen_play3, chosen_play4, board_usage
+	def __init__(self, board_size: int = 8, random_start: bool = False):
 		# check arguments
 		assert 4 <= board_size <= 12, f'Invalid board size: board_size should be between 4 and 12, but got {board_size}'
 		assert board_size % 2 == 0, f'Invalid board size: board_size should be even, but got {board_size}'
 
 		self.board_size: int = board_size
-		self.change_board_after_n_plays = change_board_after_n_plays
 		self.random_start = random_start
 
 		# create board
@@ -48,50 +41,25 @@ class Board:
 		self.num_free_spots: int = board_size ** 2 - 4
 
 		# adding random start at 4 steps in future (W - B - W - B)
+
 		if self.random_start:
-			actions1 = self._get_legal_actions(self.board, self.board_size, Color.BLACK.value)
-			keys1 = list(actions1.keys())
-			action_key1 = keys1[chosen_play1]
-			self.take_action(action_key1, actions1[action_key1], Color.BLACK.value)
+			nr_of_plies = (choice(3, 1, replace=False, p=[0.2, 0.4, 0.4])[0])
 
-			actions2 = self._get_legal_actions(self.board, self.board_size, Color.WHITE.value)
-			keys2 = list(actions2.keys())
-			action_key2 = keys2[chosen_play2]
-			self.take_action(action_key2, actions2[action_key2], Color.WHITE.value)
+			for rand_ply in range(nr_of_plies):
+				rd_actions = self._get_legal_actions(self.board, self.board_size, Color.BLACK.value)
+				location: Tuple[int, int] = random.choice(list(rd_actions.keys()))
+				legal_directions: List[Tuple[int, int]] = rd_actions[location]
+				self.take_action(location, legal_directions, Color.BLACK.value)
 
-			actions3 = self._get_legal_actions(self.board, self.board_size, Color.BLACK.value)
-			keys3 = list(actions3.keys())
-			action_key3 = keys3[chosen_play3]
-			self.take_action(action_key3, actions3[action_key3], Color.BLACK.value)
+				rd_actions = self._get_legal_actions(self.board, self.board_size, Color.WHITE.value)
+				location: Tuple[int, int] = random.choice(list(rd_actions.keys()))
+				legal_directions: List[Tuple[int, int]] = rd_actions[location]
+				self.take_action(location, legal_directions, Color.WHITE.value)
 
-			actions4 = self._get_legal_actions(self.board, self.board_size, Color.WHITE.value)
-			keys4 = list(actions4.keys())
-			action_key4 = keys4[chosen_play4]
-			self.take_action(action_key4, actions4[action_key4], Color.WHITE.value)
-
-			if board_usage is not None and board_usage < self.change_board_after_n_plays - 1:
-				board_usage += 1
-			else:
-				if chosen_play4 + 1 < len(keys4):
-					chosen_play4 += 1
-				elif chosen_play3 + 1 < len(keys3):
-					chosen_play3 += 1
-					chosen_play4 = 0
-				elif chosen_play2 + 1 < len(keys2):
-					chosen_play2 += 1
-					chosen_play3 = 0
-					chosen_play4 = 0
-				elif chosen_play1 + 1 < len(keys1):
-					chosen_play1 += 1
-					chosen_play2 = 0
-					chosen_play3 = 0
-					chosen_play4 = 0
-				else:
-					chosen_play1 = 0
-					chosen_play2 = 0
-					chosen_play3 = 0
-					chosen_play4 = 0
-				board_usage = 0
+	def calculate_nr_plies(self):
+		num_black_disks: int = len(np.where(self.board == Color.BLACK.value)[0])
+		num_white_disks: int = len(np.where(self.board == Color.WHITE.value)[0])
+		return num_black_disks + num_white_disks - 4
 
 	def __str__(self):
 		string: str = '\t\t\u2502'
