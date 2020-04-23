@@ -250,7 +250,7 @@ if __name__ == '__main__':
     global_config: GlobalConfig = GlobalConfig(board_size=8, gui_size=400)  # global config
 
     # TRAIN
-    config: Config = Config(
+    train_config: Config = Config(
         black=CNNDQNTrainableAgent(
             Color.BLACK,
             immediate_reward=MinimaxHeuristic(global_config.board_size),
@@ -272,11 +272,10 @@ if __name__ == '__main__':
         random_start = True,
         train_all_agents=True,
     )
-    main()
 
     # EVALUATE
-    config: Config = Config(
-        black=config.black,
+    eval_config: Config = Config(
+        black=train_config.black,
         train_black=False,
         white=RandomAgent(Color.WHITE),
         train_white=False,
@@ -289,11 +288,10 @@ if __name__ == '__main__':
         train_all_agents=False,
         random_start=False,
     )
-    main()
 
     # HUMAN
-    config: Config = Config(
-        black=config.black,
+    human_config: Config = Config(
+        black=train_config.black,
         train_black=False,
         white=HumanAgent(Color.WHITE),
         train_white=False,
@@ -306,4 +304,8 @@ if __name__ == '__main__':
         train_all_agents=False,
         random_start=False,
     )
-    main()
+    
+    configs = [train_config,eval_config,human_config]
+    for config_ in configs:
+        config = config_
+        main()
