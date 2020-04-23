@@ -16,12 +16,11 @@ class Game:
 		self.config: Config = config
 		self.episode: int = episode
 
-		self.board: Board = Board(global_config.board_size) if not config.tournament_mode else Board(
-			global_config.board_size, change_board_after_n_plays=4)  # create board
-		self.ply = 0  # no plies so far
-		self.agent: Agent = self.config.black  # black always begins
-		self.prev_pass: bool = False  # opponent did not pass in previous ply
-		self.done: bool = False  # not done yet
+		self.board: Board = Board(global_config.board_size, random_start=config.random_start)
+		self.ply = self.board.num_black_disks + self.board.num_white_disks - 4
+		self.agent: Agent = self.config.black
+		self.prev_pass: bool = False
+		self.done: bool = False
 
 	def play(self) -> None:
 		if self.config.verbose_live:

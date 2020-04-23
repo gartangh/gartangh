@@ -7,8 +7,8 @@ from game_logic.agents.agent import Agent
 from game_logic.agents.cnn_dqn_trainable_agent import CNNDQNTrainableAgent
 from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
 from game_logic.agents.human_agent import HumanAgent
-from game_logic.agents.minimax_agent import MinimaxAgent
 from game_logic.agents.random_agent import RandomAgent
+from game_logic.agents.minimax_agent import MinimaxAgent
 from game_logic.agents.risk_regions_agent import RiskRegionsAgent
 from game_logic.agents.trainable_agent import TrainableAgent
 from game_logic.game import Game
@@ -263,12 +263,13 @@ if __name__ == '__main__':
         train_black=True,
         white=RandomAgent(Color.WHITE),
         train_white=False,
-        num_episodes=500,
+        num_episodes=150,
         plot_win_ratio=True,
         plot_win_ratio_live=True,
         verbose=False,
         verbose_live=False,
         tournament_mode=False,
+        random_start = True,
         train_all_agents=True,
     )
     main()
@@ -286,6 +287,7 @@ if __name__ == '__main__':
         verbose_live=False,
         tournament_mode=False,
         train_all_agents=False,
+        random_start=False,
     )
     main()
 
@@ -302,5 +304,6 @@ if __name__ == '__main__':
         verbose_live=False,
         tournament_mode=False,
         train_all_agents=False,
+        random_start=False,
     )
     main()
