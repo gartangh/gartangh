@@ -1,15 +1,14 @@
 from math import ceil
-import matplotlib.pyplot as plt
 
 from game_logic.agents.agent import Agent
 from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
-from plot import Plot
+from utils.plot import Plot
 from utils.color import Color
 
 
 class Config:
 	def __init__(self, black: Agent, train_black: bool, white: Agent, train_white: bool, num_episodes: int,
-	             plot : Plot = None, plot_win_ratio_live: bool = False,
+	             plot: Plot = None, plot_win_ratio_live: bool = False,
 	             verbose: bool = False, verbose_live: bool = False, random_start: bool = False) -> None:
 		# check parameters
 		assert black.color is Color.BLACK, f'Invalid black agent: black agent\'s color is not black'

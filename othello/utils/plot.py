@@ -1,5 +1,6 @@
 import os
-import datetime
+from typing import List
+
 import matplotlib.pyplot as plt
 
 from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
@@ -8,12 +9,12 @@ from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
 class Plot:
 	def __init__(self, black: DQNTrainableAgent = None) -> None:
 		self.black: DQNTrainableAgent = black
-		self.win_rates: list = [0.0]
-		self.episodes: list = [0]
-		self.epsilons: list = [black.training_policy.current_eps_value]
-		self.last_matches: list = []
+		self.win_rates: List[float] = [0.0]
+		self.episodes: List[int] = [0]
+		self.epsilons: List[float] = [black.training_policy.current_eps_value]
+		self.last_matches: List[int] = []
 		self.live_plot: bool = False
-		self.index_opponent_switch: list = []  # list of episode numbers on which the opponent changed
+		self.index_opponent_switch: List[int] = []  # list of episode numbers on which the opponent changed
 
 		plt.title('Win ratio and epsilon (green, dotted) of black')
 		plt.xlabel('number of games played')
@@ -30,7 +31,7 @@ class Plot:
 			plt.ioff()
 			plt.close('all')  # close the window
 
-		self.index_opponent_switch.append(len(self.episodes)-1)
+		self.index_opponent_switch.append(len(self.episodes) - 1)
 
 	def save_plot(self) -> None:
 		path = "plots/"
@@ -72,7 +73,8 @@ class Plot:
 				plt.ylabel('win ratio and epsilon')
 				for i in range(len(self.index_opponent_switch)):
 					indices = slice(self.index_opponent_switch[i],
-					                self.index_opponent_switch[i+1] if i+1 < len(self.index_opponent_switch) else -1)
+					                self.index_opponent_switch[i + 1] if i + 1 < len(
+						                self.index_opponent_switch) else -1)
 					plt.plot(self.episodes[indices], self.win_rates[indices])
 				plt.plot(self.episodes, self.epsilons, color='green', linestyle='--')
 				plt.draw()

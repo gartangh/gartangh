@@ -1,6 +1,5 @@
 from typing import List
 
-import matplotlib.pyplot as plt
 from colorama import init
 from termcolor import colored
 from tqdm import tqdm
@@ -13,11 +12,11 @@ from game_logic.agents.random_agent import RandomAgent
 from game_logic.agents.risk_regions_agent import RiskRegionsAgent
 from game_logic.game import Game
 from gui.controller import Controller
-from plot import Plot
 from utils.color import Color
 from utils.config import Config
 from utils.global_config import GlobalConfig
 from utils.immediate_rewards.minimax_heuristic import MinimaxHeuristic
+from utils.plot import Plot
 
 
 def main() -> None:
@@ -51,7 +50,8 @@ def main() -> None:
 
 		# plot win ratio
 		if config.plot is not None:
-			config.plot.update(game.board.num_black_disks, game.board.num_white_disks, episode, config.plot_every_n_episodes)
+			config.plot.update(game.board.num_black_disks, game.board.num_white_disks, episode,
+			                   config.plot_every_n_episodes)
 
 	print_scores(config.num_episodes, black.num_games_won, white.num_games_won)
 
