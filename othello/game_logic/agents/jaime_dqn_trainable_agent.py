@@ -9,8 +9,6 @@ from utils.immediate_rewards.immediate_reward import ImmediateReward
 
 
 class JaimeDQNTrainableAgent(DQNTrainableAgent):
-	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8):
-		super().__init__(color, immediate_reward, board_size)
 
 	def __str__(self):
 		return f'Jaime{super().__str__()}'

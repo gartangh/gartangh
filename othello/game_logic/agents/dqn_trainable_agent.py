@@ -18,8 +18,8 @@ from utils.policies.epsilon_greedy_policy import EpsilonGreedyPolicy
 class DQNTrainableAgent(TrainableAgent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8,
 	             load_old_weights: bool = False, start_epsilon: float = 0.99, end_epsilon: float = 0.01,
-	             epsilon_steps: int = 75_000, allow_exploration: bool = False) -> None:
-		super().__init__(color, immediate_reward, board_size)
+	             epsilon_steps: int = 75_000, allow_exploration: bool = False, policy_sampling: bool = False) -> None:
+		super().__init__(color, immediate_reward, board_size, load_old_weights, policy_sampling)
 		self.start_epsilon: float = start_epsilon
 		self.epsilon: float = end_epsilon
 		self.epsilon_steps: int = epsilon_steps
@@ -27,12 +27,13 @@ class DQNTrainableAgent(TrainableAgent):
 		self.discount_factor: float = 1.0
 
 		# start with epsilon 0.99 and slowly decrease it
-		self.play_policy: EpsilonGreedyPolicy = EpsilonGreedyPolicy(self.epsilon, board_size)
+		self.play_policy: EpsilonGreedyPolicy = EpsilonGreedyPolicy(self.epsilon, board_size, policy_sampling)
 		self.training_policy: AnnealingEpsilonGreedyPolicy = AnnealingEpsilonGreedyPolicy(self.start_epsilon,
 		                                                                                  self.epsilon,
 		                                                                                  self.epsilon_steps,
 		                                                                                  board_size,
-		                                                                                  self.allow_exploration)
+		                                                                                  self.allow_exploration,
+		                                                                                  policy_sampling)
 
 		# old and new network to compare training loss
 		self.action_value_network: Sequential = self.create_model()

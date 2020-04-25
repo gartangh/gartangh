@@ -9,11 +9,12 @@ from utils.replay_buffer import ReplayBuffer
 
 class TrainableAgent(Agent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8,
-	             load_old_weights: bool = False):
+	             load_old_weights: bool = False, policy_sampling: bool = False):
 		super().__init__(color, immediate_reward)
 		self.board_size: int = board_size
 		self.train_mode = False
 		self.replay_buffer = ReplayBuffer(board_size ** 2)
+		self.policy_sampling = policy_sampling
 
 		if load_old_weights:
 			self.load_weights()

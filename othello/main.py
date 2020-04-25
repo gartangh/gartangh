@@ -128,6 +128,7 @@ if __name__ == '__main__':
 		start_epsilon=0.99,
 		end_epsilon=0.01,
 		epsilon_steps=20_000,
+		policy_sampling = False,
 	)
 
 	# train strategy

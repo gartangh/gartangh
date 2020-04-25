@@ -6,11 +6,11 @@ from utils.policies.policy import Policy
 
 
 class AnnealingEpsilonGreedyPolicy(Policy):
-	def __init__(self, start_eps, end_eps, n_steps, board_size, allow_exploration):
+	def __init__(self, start_eps, end_eps, n_steps, board_size, allow_exploration, policy_sampling):
 		self.start_eps = start_eps
 		self.end_eps = end_eps
 		self.n_steps = n_steps
-		self.inner_policy = EpsilonGreedyPolicy(self.start_eps, board_size)
+		self.inner_policy = EpsilonGreedyPolicy(self.start_eps, board_size, policy_sampling)
 		self.decisions_made = 0
 		self.episode = 1
 		self.allow_exploration = allow_exploration
