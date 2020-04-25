@@ -67,6 +67,9 @@ class Plot:
 			if self.live_plot:
 				# give different colors for different opponents by plotting their winrates separately
 				plt.cla()  # clear axes
+				plt.title('Win ratio and epsilon (green, dotted) of black')
+				plt.xlabel('number of games played')
+				plt.ylabel('win ratio and epsilon')
 				for i in range(len(self.episode_opponent_switch)):
 					indices = slice(self.episode_opponent_switch[i],
 					                self.episode_opponent_switch[i+1] if i+1 < len(self.episode_opponent_switch) else -1)
