@@ -13,7 +13,7 @@ class Plot:
 		self.epsilons: list = [black.training_policy.current_eps_value]
 		self.last_matches: list = []
 		self.live_plot: bool = False
-		self.episode_opponent_switch: list = []  # list of episode numbers on which the opponent changed
+		self.index_opponent_switch: list = []  # list of episode numbers on which the opponent changed
 
 		plt.title('Win ratio and epsilon (green, dotted) of black')
 		plt.xlabel('number of games played')
@@ -30,7 +30,7 @@ class Plot:
 			plt.ioff()
 			plt.close('all')  # close the window
 
-		self.episode_opponent_switch.append(self.episodes[-1])
+		self.index_opponent_switch.append(len(self.episodes)-1)
 
 	def save_plot(self) -> None:
 		path = "plots/"
@@ -41,9 +41,9 @@ class Plot:
 		ax.set_title('Win ratio and epsilon (green, dotted) of black')
 		ax.set_xlabel('number of games played')
 		ax.set_ylabel('win ratio and epsilon')
-		for i in range(len(self.episode_opponent_switch)):
-			indices = slice(self.episode_opponent_switch[i],
-			                self.episode_opponent_switch[i + 1] if i + 1 < len(self.episode_opponent_switch) else -1)
+		for i in range(len(self.index_opponent_switch)):
+			indices = slice(self.index_opponent_switch[i],
+			                self.index_opponent_switch[i + 1] if i + 1 < len(self.index_opponent_switch) else -1)
 			ax.plot(self.episodes[indices], self.win_rates[indices])
 		ax.plot(self.episodes, self.epsilons, color='green', linestyle='--')
 		# uncomment the line below to make the name contain the time
@@ -62,7 +62,7 @@ class Plot:
 		if episode % plot_every_n_episodes == plot_every_n_episodes - 1 and len(self.last_matches) > 0:
 			self.win_rates.append(sum(self.last_matches) / len(self.last_matches))
 			self.epsilons.append(self.black.training_policy.current_eps_value)
-			self.episodes.append(self.episode_opponent_switch[-1] + episode)
+			self.episodes.append(self.episodes[self.index_opponent_switch[-1]] + episode)
 
 			if self.live_plot:
 				# give different colors for different opponents by plotting their winrates separately
@@ -70,9 +70,9 @@ class Plot:
 				plt.title('Win ratio and epsilon (green, dotted) of black')
 				plt.xlabel('number of games played')
 				plt.ylabel('win ratio and epsilon')
-				for i in range(len(self.episode_opponent_switch)):
-					indices = slice(self.episode_opponent_switch[i],
-					                self.episode_opponent_switch[i+1] if i+1 < len(self.episode_opponent_switch) else -1)
+				for i in range(len(self.index_opponent_switch)):
+					indices = slice(self.index_opponent_switch[i],
+					                self.index_opponent_switch[i+1] if i+1 < len(self.index_opponent_switch) else -1)
 					plt.plot(self.episodes[indices], self.win_rates[indices])
 				plt.plot(self.episodes, self.epsilons, color='green', linestyle='--')
 				plt.draw()
