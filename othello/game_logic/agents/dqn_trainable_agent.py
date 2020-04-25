@@ -7,19 +7,27 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Sequential
 
-from game_logic.agents.trainable_agent import TrainableAgent
+from game_logic.agents.agent import Agent
 from game_logic.board import Board
 from utils.color import Color
 from utils.immediate_rewards.immediate_reward import ImmediateReward
 from utils.policies.annealing_epsilon_greedy_policy import AnnealingEpsilonGreedyPolicy
 from utils.policies.epsilon_greedy_policy import EpsilonGreedyPolicy
+from utils.replay_buffer import ReplayBuffer
 
 
-class DQNTrainableAgent(TrainableAgent):
+class DQNTrainableAgent(Agent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8,
 	             load_old_weights: bool = False, start_epsilon: float = 0.99, end_epsilon: float = 0.01,
 	             epsilon_steps: int = 75_000, allow_exploration: bool = False, policy_sampling: bool = False) -> None:
-		super().__init__(color, immediate_reward, board_size, load_old_weights, policy_sampling)
+		super().__init__(color, immediate_reward)
+		self.board_size: int = board_size
+		self.train_mode = False
+		self.replay_buffer = ReplayBuffer(board_size ** 2)
+		self.policy_sampling = policy_sampling
+		self.play_policy = None
+		self.training_policy = None
+
 		self.start_epsilon: float = start_epsilon
 		self.epsilon: float = end_epsilon
 		self.epsilon_steps: int = epsilon_steps
@@ -38,6 +46,9 @@ class DQNTrainableAgent(TrainableAgent):
 		# old and new network to compare training loss
 		self.action_value_network: Sequential = self.create_model()
 
+		if load_old_weights:
+			self.load_weights()
+
 		# save the weights of action_value_network periodically, i.e. when
 		# self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 		self.persist_weights_every_n_times_trained: int = int(1e3)
@@ -47,6 +58,9 @@ class DQNTrainableAgent(TrainableAgent):
 
 	def __str__(self) -> str:
 		return f'DQN{super().__str__()}'
+
+	def set_train_mode(self, mode: bool):
+		self.train_mode = mode
 
 	def train(self, persist_weights: bool = False) -> None:
 		assert self.train_mode is True, 'Cannot train while not in train mode'

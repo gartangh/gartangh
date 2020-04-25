@@ -3,7 +3,7 @@ from termcolor import colored
 from typing import List, Tuple, Dict
 
 from game_logic.agents.agent import Agent
-from game_logic.agents.trainable_agent import TrainableAgent
+from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
 from game_logic.board import Board
 from utils.color import Color
 from utils.config import Config
@@ -63,7 +63,7 @@ class Game:
 				self.prev_pass = False  # this agent has legal actions, no pass
 
 				prev_board = np.copy(self.board.board) if isinstance(self.agent,
-				                                                     TrainableAgent) and self.agent.train_mode else None
+				                                                     DQNTrainableAgent) and self.agent.train_mode else None
 				self.done = self.board.take_action(location, legal_directions, self.agent.color.value)
 				if self.config.verbose_live:
 					print(self.board)
@@ -75,7 +75,7 @@ class Game:
 					if self.config.verbose_live:
 						print(f'Immediate reward: {immediate_reward}')
 					# remember the board, the taken action and the resulting reward
-					if isinstance(self.agent, TrainableAgent):
+					if isinstance(self.agent, DQNTrainableAgent):
 						self.agent.replay_buffer.add(prev_board, location, immediate_reward, False)
 
 			if self.config.verbose_live:
@@ -92,7 +92,7 @@ class Game:
 
 				# train the agents on the made moves
 				for agent in [self.config.black, self.config.white]:
-					if isinstance(agent, TrainableAgent) and agent.train_mode:
+					if isinstance(agent, DQNTrainableAgent) and agent.train_mode:
 						# use a final reward for winning/losing
 						final_reward = agent.immediate_reward.final_reward(self.board, agent.color)
 						# change reward in last buffer entry

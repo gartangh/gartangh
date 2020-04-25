@@ -138,3 +138,4 @@ replay_buffers/
 hyper_values/
 log.txt
 backup/
+plots/
