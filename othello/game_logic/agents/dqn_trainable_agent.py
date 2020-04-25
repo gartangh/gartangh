@@ -19,19 +19,23 @@ from utils.replay_buffer import ReplayBuffer
 class DQNTrainableAgent(Agent):
 	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8,
 	             load_old_weights: bool = False, start_epsilon: float = 0.99, end_epsilon: float = 0.01,
-	             epsilon_steps: int = 75_000, allow_exploration: bool = False, policy_sampling: bool = False) -> None:
+	             epsilon_steps: int = 75_000, allow_exploration: bool = False, exploration_factor: float = 2,
+				 decrease_rico: bool = False, rico_decreaser: float = 1, policy_sampling: bool = False) -> None:
 		super().__init__(color, immediate_reward)
+
 		self.board_size: int = board_size
 		self.train_mode = False
 		self.replay_buffer = ReplayBuffer(board_size ** 2)
 		self.policy_sampling = policy_sampling
 		self.play_policy = None
 		self.training_policy = None
-
 		self.start_epsilon: float = start_epsilon
 		self.epsilon: float = end_epsilon
 		self.epsilon_steps: int = epsilon_steps
 		self.allow_exploration: bool = allow_exploration
+		self.exploration_factor: float = exploration_factor
+		self.decrease_rico: bool = decrease_rico
+		self.rico_decreaser: float = rico_decreaser
 		self.discount_factor: float = 1.0
 
 		# start with epsilon 0.99 and slowly decrease it
@@ -41,6 +45,9 @@ class DQNTrainableAgent(Agent):
 		                                                                                  self.epsilon_steps,
 		                                                                                  board_size,
 		                                                                                  self.allow_exploration,
+																						  self.exploration_factor,
+																						  self.decrease_rico,
+																						  self.rico_decreaser,
 		                                                                                  policy_sampling)
 
 		# old and new network to compare training loss

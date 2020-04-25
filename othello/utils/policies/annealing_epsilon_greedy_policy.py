@@ -6,7 +6,9 @@ from utils.policies.policy import Policy
 
 
 class AnnealingEpsilonGreedyPolicy(Policy):
-	def __init__(self, start_eps, end_eps, n_steps, board_size, allow_exploration, policy_sampling):
+	def __init__(self, start_eps, end_eps, n_steps, board_size, allow_exploration, exploration_factor, decrease_rico, rico_decreaser, policy_sampling):
+		assert 1 <= exploration_factor <= 2
+
 		self.start_eps = start_eps
 		self.end_eps = end_eps
 		self.n_steps = n_steps
@@ -15,6 +17,10 @@ class AnnealingEpsilonGreedyPolicy(Policy):
 		self.episode = 1
 		self.allow_exploration = allow_exploration
 		self.curr_eps = start_eps
+		self.exploration_factor = exploration_factor
+		self.decrease_rico = decrease_rico
+		self.rico_multiplier = 1
+		self.rico_decreaser = rico_decreaser
 
 	def __str__(self):
 		return f'AnnealingEpsilonGreedy{super().__str__()}'
@@ -27,8 +33,10 @@ class AnnealingEpsilonGreedyPolicy(Policy):
 		if not self.allow_exploration:
 			value = self.get_linear_value()
 		# Exploration allowed
-		elif self.episode == 101 or self.episode == 201 or self.episode == 301 or self.episode == 401:
-			value = (self.start_eps + self.curr_eps) / 2
+		elif self.episode == 51 or self.episode == 101 or self.episode == 151 or self.episode == 201:
+			value = (self.start_eps + self.curr_eps) / self.exploration_factor
+			if self.decrease_rico:
+				self.rico_multiplier += self.rico_decreaser
 		else:
 			value = self.get_linear_value()
 		self.curr_eps = value
@@ -44,7 +52,7 @@ class AnnealingEpsilonGreedyPolicy(Policy):
 
 	def get_linear_value(self) -> float:
 		# Linear annealed: f(x) = ax + b.
-		a = -float(self.start_eps - self.end_eps) / float(self.n_steps)
+		a = -float(self.start_eps - self.end_eps) / float(self.n_steps) * self.rico_multiplier
 		b = float(self.start_eps)
 		value = max(self.end_eps, a * float(self.decisions_made) + b)
 		return value

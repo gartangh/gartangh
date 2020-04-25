@@ -85,10 +85,14 @@ if __name__ == '__main__':
 		Color.BLACK,
 		immediate_reward=MinimaxHeuristic(global_config.board_size),
 		board_size=global_config.board_size,
-		start_epsilon=0.99,
-		end_epsilon=0.01,
-		epsilon_steps=20_000,
+		start_epsilon=1.,
+		end_epsilon=0.,
+		epsilon_steps=75_000,
 		policy_sampling=False,
+		allow_exploration=True,
+		exploration_factor=2,
+		decrease_rico=True,
+		rico_decreaser=1,
 	)
 
 	# init plot
@@ -139,6 +143,19 @@ if __name__ == '__main__':
 			verbose_live=False,
 			random_start=True,
 		),
+		# RandomAgent
+		Config(
+			black=black,
+			train_black=True,
+			white=RandomAgent(Color.WHITE),
+			train_white=False,
+			num_episodes=200,
+			plot=plot,
+			plot_win_ratio_live=True,
+			verbose=False,
+			verbose_live=False,
+			random_start=True,
+		),
 	]
 	for config in train_configs:
 		main()
@@ -156,6 +173,7 @@ if __name__ == '__main__':
 			train_white=False,
 			num_episodes=100,
 			plot=None,
+			plot_win_ratio_live=False,
 			verbose=True,
 			verbose_live=False,
 			random_start=False,
@@ -170,8 +188,9 @@ if __name__ == '__main__':
 		train_black=False,
 		white=HumanAgent(Color.WHITE),
 		train_white=False,
-		num_episodes=3,
+		num_episodes=10,
 		plot=None,
+		plot_win_ratio_live=False,
 		verbose=True,
 		verbose_live=False,
 		random_start=False,
