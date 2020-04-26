@@ -3,12 +3,12 @@ from tensorflow.keras import Sequential, Input
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 
-from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
+from agents.trainable_agent import TrainableAgent
 from utils.reshapes import split_flatten
 
 
-class DenseDQNTrainableAgent(DQNTrainableAgent):
-	def __str__(self):
+class DenseTrainableAgent(TrainableAgent):
+	def __str__(self) -> str:
 		return f'Dense{super().__str__()}'
 
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
@@ -30,5 +30,5 @@ class DenseDQNTrainableAgent(DQNTrainableAgent):
 
 		return model
 
-	def board_to_nn_input(self, board: np.ndarray) -> np.array:
+	def board_to_nn_input(self, board: np.array) -> np.array:
 		return split_flatten(board)

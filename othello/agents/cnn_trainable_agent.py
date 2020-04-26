@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import GlobalAveragePooling2D
 from tensorflow.keras.optimizers import Adam
 
-from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
+from agents.trainable_agent import TrainableAgent
 from utils.reshapes import split
 
 try:
@@ -18,8 +18,8 @@ except:
 	pass
 
 
-class CNNDQNTrainableAgent(DQNTrainableAgent):
-	def __str__(self):
+class CNNTrainableAgent(TrainableAgent):
+	def __str__(self) -> str:
 		return f'CNN{super().__str__()}'
 
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
@@ -27,17 +27,12 @@ class CNNDQNTrainableAgent(DQNTrainableAgent):
 			Input(shape=(2, self.board_size, self.board_size)),
 			Conv2D(16, (3, 3), padding='same', data_format='channels_first', activation='relu',
 			       kernel_initializer='he_uniform'),
-			Conv2D(32, (3, 3), padding='same', data_format='channels_first', activation='relu',
-			       kernel_initializer='he_uniform'),
 			Conv2D(64, (3, 3), padding='same', data_format='channels_first', activation='relu',
-			       kernel_initializer='he_uniform'),
-			Conv2D(128, (3, 3), padding='same', data_format='channels_first', activation='relu',
 			       kernel_initializer='he_uniform'),
 			Conv2D(256, (3, 3), padding='same', data_format='channels_first', activation='relu',
 			       kernel_initializer='he_uniform'),
 			GlobalAveragePooling2D(data_format='channels_first'),
 			Flatten(data_format='channels_first'),
-			Dense(256, activation='softmax'),
 			Dense(self.board_size ** 2, activation='softmax'),
 		])
 		model.compile(loss="mean_squared_error", optimizer=Adam(lr=lr))
@@ -47,5 +42,5 @@ class CNNDQNTrainableAgent(DQNTrainableAgent):
 
 		return model
 
-	def board_to_nn_input(self, board: np.ndarray):
+	def board_to_nn_input(self, board: np.array) -> np.array:
 		return split(board)

@@ -2,16 +2,17 @@ import numpy as np
 from termcolor import colored
 from typing import List, Tuple, Dict
 
-from game_logic.agents.agent import Agent
-from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
+from agents.agent import Agent
+from agents.trainable_agent import TrainableAgent
 from game_logic.board import Board
 from utils.color import Color
 from utils.config import Config
 from utils.global_config import GlobalConfig
+from utils.types import Actions
 
 
 class Game:
-	def __init__(self, global_config: GlobalConfig, config: Config, episode: int):
+	def __init__(self, global_config: GlobalConfig, config: Config, episode: int) -> None:
 		self.global_config: GlobalConfig = global_config
 		self.config: Config = config
 		self.episode: int = episode
@@ -34,12 +35,11 @@ class Game:
 			self.ply += 1
 
 			if self.config.verbose_live:
-				disk_icon: str = u'\u25CF' if self.agent.color == Color.BLACK else u'\u25CB'
+				disk_icon: str = u'\u25CF' if self.agent.color is Color.BLACK else u'\u25CB'
 				print(f'\tPly {self.ply}: {self.agent.color.name} {disk_icon}')
 
 			# get legal actions
-			legal_actions: Dict[Tuple[int, int], List[Tuple[int, int]]] = self.board.get_legal_actions(
-				self.agent.color.value)
+			legal_actions: Actions = self.board.get_legal_actions(self.agent.color)
 
 			if not legal_actions:
 				# pass if no legal actions
@@ -54,7 +54,7 @@ class Game:
 				# get next action from legal actions and take it
 				location, legal_directions = self.agent.get_next_action(self.board, legal_actions)
 				if self.config.verbose_live:
-					print(f'\tLegal actions: {list(legal_actions.keys())}')
+					print(f'\tLegal actions: {list(legal_actions)}')
 					board_copy: Board = self.board.get_deepcopy()
 					for legal_location in legal_actions:
 						board_copy.board[legal_location] = Color.LEGAL.value
@@ -63,19 +63,18 @@ class Game:
 				self.prev_pass = False  # this agent has legal actions, no pass
 
 				prev_board = np.copy(self.board.board) if isinstance(self.agent,
-				                                                     DQNTrainableAgent) and self.agent.train_mode else None
-				self.done = self.board.take_action(location, legal_directions, self.agent.color.value)
+				                                                     TrainableAgent) and self.agent.train_mode else None
+				self.done = self.board.take_action(location, legal_directions, self.agent.color)
 				if self.config.verbose_live:
 					print(self.board)
 
 				# get immediate reward if agent makes use of it
-				if self.agent.immediate_reward:
-					immediate_reward: float = self.agent.immediate_reward.immediate_reward(self.board,
-					                                                                       self.agent.color.value)
+				if isinstance(self.agent, TrainableAgent):
+					immediate_reward: float = self.agent.immediate_reward.reward(self.board, self.agent.color)
 					if self.config.verbose_live:
 						print(f'Immediate reward: {immediate_reward}')
 					# remember the board, the taken action and the resulting reward
-					if isinstance(self.agent, DQNTrainableAgent):
+					if isinstance(self.agent, TrainableAgent):
 						self.agent.replay_buffer.add(prev_board, location, immediate_reward, False)
 
 			if self.config.verbose_live:
@@ -87,14 +86,14 @@ class Game:
 			else:
 				# the game is done
 				# update scores of both agents
-				self.config.black.update_final_score(self.board)
-				self.config.white.update_final_score(self.board)
+				self.config.black.update_score(self.board)
+				self.config.white.update_score(self.board)
 
 				# train the agents on the made moves
 				for agent in [self.config.black, self.config.white]:
-					if isinstance(agent, DQNTrainableAgent) and agent.train_mode:
+					if isinstance(agent, TrainableAgent) and agent.train_mode:
 						# use a final reward for winning/losing
-						final_reward = agent.immediate_reward.final_reward(self.board, agent.color)
+						final_reward: float = agent.final_reward.reward(self.board, agent.color)
 						# change reward in last buffer entry
 						agent.replay_buffer.add_final_reward(final_reward)
 						# learn from the game

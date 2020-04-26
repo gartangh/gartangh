@@ -4,18 +4,23 @@ from colorama import init
 from termcolor import colored
 from tqdm import tqdm
 
-from game_logic.agents.cnn_dqn_trainable_agent import CNNDQNTrainableAgent
-from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
-from game_logic.agents.human_agent import HumanAgent
-from game_logic.agents.minimax_agent import MinimaxAgent
-from game_logic.agents.random_agent import RandomAgent
-from game_logic.agents.risk_regions_agent import RiskRegionsAgent
+from agents.cnn_trainable_agent import CNNTrainableAgent
+from agents.human_agent import HumanAgent
+from agents.minimax_agent import MinimaxAgent
+from agents.random_agent import RandomAgent
+from agents.risk_regions_agent import RiskRegionsAgent
+from agents.trainable_agent import TrainableAgent
 from game_logic.game import Game
 from gui.controller import Controller
+from policies.annealing_trainable_policy import AnnealingTrainablePolicy
+from policies.epsilon_greedy_annealing_trainable_policy import EpsilonGreedyAnnealingTrainablePolicy
+from policies.top_k_random_trainable_policy import TopKRandomTrainablePolicy
+from rewards.minimax_heuristic import MinimaxHeuristic
+from rewards.risk_regions_reward import RiskRegionsReward
+from rewards.fixed_values_reward import FixedValuesReward
 from utils.color import Color
 from utils.config import Config
 from utils.global_config import GlobalConfig
-from utils.immediate_rewards.minimax_heuristic import MinimaxHeuristic
 from utils.plot import Plot
 
 
@@ -28,9 +33,15 @@ def main() -> None:
 	white = config.white
 	print(f'\nAgents:\n\t{black}\n\t{white}\n')
 
+	# initialize training policy
+	if isinstance(black, TrainableAgent) and isinstance(black.train_policy, AnnealingTrainablePolicy):
+		black.train_policy.num_episodes = config.num_episodes
+	if isinstance(white, TrainableAgent) and isinstance(white.train_policy, AnnealingTrainablePolicy):
+		white.train_policy.num_episodes = config.num_episodes
+
 	# initialize live plot
 	if config.plot is not None:
-		config.plot.toggle_live_plot(config.plot_win_ratio_live)
+		config.plot.set_plot_live(config.plot_win_ratio_live)
 
 	for episode in tqdm(range(1, config.num_episodes + 1)):
 		# create new game
@@ -38,13 +49,16 @@ def main() -> None:
 		if isinstance(white, HumanAgent):
 			# create GUI controller
 			controller: Controller = Controller(game)
-			controller.start()
-		elif isinstance(black, DQNTrainableAgent):
-			# update epsilon annealing policy
-			black.training_policy.update_policy(episode)
 			# play game
-			game.play()
+			controller.start()
 		else:
+			if isinstance(black, TrainableAgent) and isinstance(black.train_policy, AnnealingTrainablePolicy):
+				# update epsilon annealing policy
+				black.train_policy.update(episode)
+			if isinstance(white, TrainableAgent) and isinstance(black.train_policy, AnnealingTrainablePolicy):
+				# update epsilon annealing policy
+				white.train_policy.update(episode)
+
 			# play game
 			game.play()
 
@@ -56,17 +70,17 @@ def main() -> None:
 	print_scores(config.num_episodes, black.num_games_won, white.num_games_won)
 
 	# save models
-	if isinstance(black, DQNTrainableAgent) and black.train_mode:
+	if isinstance(black, TrainableAgent) and black.train_mode:
 		black.final_save()
-	if isinstance(white, DQNTrainableAgent) and white.train_mode:
+	if isinstance(white, TrainableAgent) and white.train_mode:
 		white.final_save()
 
 	# reset agents
-	black.num_games_won = 0
-	white.num_games_won = 0
+	black.reset()
+	white.reset()
 
 
-def print_scores(num_episodes: int, black_won: int, white_won: int):
+def print_scores(num_episodes: int, black_won: int, white_won: int) -> None:
 	ties: int = num_episodes - black_won - white_won
 	if black_won > white_won:
 		print(colored(f'BLACK {black_won:>5}/{num_episodes:>5} ({black_won:>5}|{white_won:>5}|{ties:>5})\n', 'red'))
@@ -81,18 +95,16 @@ if __name__ == '__main__':
 	global_config: GlobalConfig = GlobalConfig(board_size=8, gui_size=400)
 
 	# trainable black agent
-	black: DQNTrainableAgent = CNNDQNTrainableAgent(
-		Color.BLACK,
-		immediate_reward=MinimaxHeuristic(global_config.board_size),
+	black: TrainableAgent = CNNTrainableAgent(
+		color=Color.BLACK,
+		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
+			inner_policy=TopKRandomTrainablePolicy(board_size=global_config.board_size, k=3),
+			start_epsilon=1.0,
+			stop_epsilon=0.0,
+		),
+		immediate_reward=RiskRegionsReward(board_size=global_config.board_size),
+		final_reward=FixedValuesReward(win=1000, draw=100, lose=-1000),
 		board_size=global_config.board_size,
-		start_epsilon=1.,
-		end_epsilon=0.,
-		epsilon_steps=75_000,
-		policy_sampling=False,
-		allow_exploration=True,
-		exploration_factor=2,
-		decrease_rico=True,
-		rico_decreaser=1,
 	)
 
 	# init plot
@@ -104,7 +116,7 @@ if __name__ == '__main__':
 		Config(
 			black=black,
 			train_black=True,
-			white=RandomAgent(Color.WHITE),
+			white=RandomAgent(color=Color.WHITE),
 			train_white=False,
 			num_episodes=200,
 			plot=plot,
@@ -117,9 +129,9 @@ if __name__ == '__main__':
 		Config(
 			black=black,
 			train_black=True,
-			white=RiskRegionsAgent(Color.WHITE, board_size=global_config.board_size),
+			white=RiskRegionsAgent(color=Color.WHITE, board_size=global_config.board_size),
 			train_white=False,
-			num_episodes=200,
+			num_episodes=100,
 			plot=plot,
 			plot_win_ratio_live=True,
 			verbose=False,
@@ -130,26 +142,12 @@ if __name__ == '__main__':
 		Config(
 			black=black,
 			train_black=True,
-			white=MinimaxAgent(
-				Color.WHITE,
-				immediate_reward=MinimaxHeuristic(board_size=global_config.board_size),
-				depth=2,
-			),
+			white=MinimaxAgent(color=Color.WHITE,
+			                   immediate_reward=MinimaxHeuristic(board_size=global_config.board_size),
+			                   depth=2,
+			                   ),
 			train_white=False,
-			num_episodes=20,
-			plot=plot,
-			plot_win_ratio_live=True,
-			verbose=False,
-			verbose_live=False,
-			random_start=True,
-		),
-		# RandomAgent
-		Config(
-			black=black,
-			train_black=True,
-			white=RandomAgent(Color.WHITE),
-			train_white=False,
-			num_episodes=200,
+			num_episodes=100,
 			plot=plot,
 			plot_win_ratio_live=True,
 			verbose=False,
@@ -162,14 +160,14 @@ if __name__ == '__main__':
 
 	# after training is complete, save the plot
 	plot.save_plot()
-	plot.toggle_live_plot(False)
+	plot.set_plot_live(False)
 
 	# test strategy
 	test_configs: List[Config] = [
 		Config(
 			black=black,
 			train_black=False,
-			white=RandomAgent(Color.WHITE),
+			white=RandomAgent(color=Color.WHITE),
 			train_white=False,
 			num_episodes=100,
 			plot=None,
@@ -186,9 +184,9 @@ if __name__ == '__main__':
 	config: Config = Config(
 		black=black,
 		train_black=False,
-		white=HumanAgent(Color.WHITE),
+		white=HumanAgent(color=Color.WHITE),
 		train_white=False,
-		num_episodes=10,
+		num_episodes=3,
 		plot=None,
 		plot_win_ratio_live=False,
 		verbose=True,

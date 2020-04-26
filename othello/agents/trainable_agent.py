@@ -2,53 +2,38 @@ import datetime
 import os
 import pickle
 import shutil
+from abc import abstractmethod
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Sequential
 
-from game_logic.agents.agent import Agent
+from agents.agent import Agent
+from policies.optimal_trainable_policy import OptimalTrainablePolicy
+from policies.trainable_policy import TrainablePolicy
+from rewards.reward import Reward
 from game_logic.board import Board
 from utils.color import Color
-from utils.immediate_rewards.immediate_reward import ImmediateReward
-from utils.policies.annealing_epsilon_greedy_policy import AnnealingEpsilonGreedyPolicy
-from utils.policies.epsilon_greedy_policy import EpsilonGreedyPolicy
 from utils.replay_buffer import ReplayBuffer
+from utils.types import Action, Actions
 
 
-class DQNTrainableAgent(Agent):
-	def __init__(self, color: Color, immediate_reward: ImmediateReward = None, board_size: int = 8,
-	             load_old_weights: bool = False, start_epsilon: float = 0.99, end_epsilon: float = 0.01,
-	             epsilon_steps: int = 75_000, allow_exploration: bool = False, exploration_factor: float = 2,
-				 decrease_rico: bool = False, rico_decreaser: float = 1, policy_sampling: bool = False) -> None:
-		super().__init__(color, immediate_reward)
+class TrainableAgent(Agent):
+	def __init__(self, color: Color, train_policy: TrainablePolicy,
+	             immediate_reward: Reward, final_reward: Reward, board_size: int, discount_factor: float = 0.99,
+	             load_old_weights: bool = False) -> None:
+		super().__init__(color)
 
-		self.board_size: int = board_size
-		self.train_mode = False
-		self.replay_buffer = ReplayBuffer(board_size ** 2)
-		self.policy_sampling = policy_sampling
-		self.play_policy = None
-		self.training_policy = None
-		self.start_epsilon: float = start_epsilon
-		self.epsilon: float = end_epsilon
-		self.epsilon_steps: int = epsilon_steps
-		self.allow_exploration: bool = allow_exploration
-		self.exploration_factor: float = exploration_factor
-		self.decrease_rico: bool = decrease_rico
-		self.rico_decreaser: float = rico_decreaser
-		self.discount_factor: float = 1.0
+		self.train_policy: TrainablePolicy = train_policy
+		self.test_policy: OptimalTrainablePolicy = OptimalTrainablePolicy(board_size)
+		self.immediate_reward: Reward = immediate_reward
+		self.final_reward: Reward = final_reward
+		self.board_size = board_size
+		self.discount_factor: float = discount_factor
 
-		# start with epsilon 0.99 and slowly decrease it
-		self.play_policy: EpsilonGreedyPolicy = EpsilonGreedyPolicy(self.epsilon, board_size, policy_sampling)
-		self.training_policy: AnnealingEpsilonGreedyPolicy = AnnealingEpsilonGreedyPolicy(self.start_epsilon,
-		                                                                                  self.epsilon,
-		                                                                                  self.epsilon_steps,
-		                                                                                  board_size,
-		                                                                                  self.allow_exploration,
-																						  self.exploration_factor,
-																						  self.decrease_rico,
-																						  self.rico_decreaser,
-		                                                                                  policy_sampling)
+		self.replay_buffer: ReplayBuffer = ReplayBuffer((board_size ** 2 - 4)//2)
+		self.train_mode: Union[bool, None] = None
 
 		# old and new network to compare training loss
 		self.action_value_network: Sequential = self.create_model()
@@ -64,13 +49,10 @@ class DQNTrainableAgent(Agent):
 		self.n_training_cycles: int = 0
 
 	def __str__(self) -> str:
-		return f'DQN{super().__str__()}'
-
-	def set_train_mode(self, mode: bool):
-		self.train_mode = mode
+		return f'Trainable{super().__str__()}'
 
 	def train(self, persist_weights: bool = False) -> None:
-		assert self.train_mode is True, 'Cannot train while not in train mode'
+		assert self.train_mode, 'Cannot train while not in train mode'
 
 		self.n_training_cycles += 1
 
@@ -87,7 +69,7 @@ class DQNTrainableAgent(Agent):
 			# calculate the new estimate of Q(s,a)
 			# via formula Q(s,a) = r + gamma * max Q(s', a')
 			# but only consider the legal actions a'
-			legal_next_actions = Board._get_legal_actions(curr_state, self.board_size, self.color.value)
+			legal_next_actions = Board._get_legal_actions(curr_state, self.board_size, self.color)
 			if len(legal_next_actions) == 0:
 				new_q_state_s = prev_reward
 			else:
@@ -106,15 +88,14 @@ class DQNTrainableAgent(Agent):
 		if persist_weights and self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 			self._persist_weights()
 
-	def get_next_action(self, board: Board, legal_actions: dict) -> tuple:
+	def get_next_action(self, board: Board, legal_actions: Actions) -> Action:
+		q_values = self.action_value_network.predict(np.expand_dims(self.board_to_nn_input(board.board), axis=0))
 		if self.train_mode:
-			action = self.training_policy.get_action(self.board_to_nn_input(board.board), self.action_value_network,
-			                                         legal_actions)
+			action: Action = self.train_policy.get_action(legal_actions, q_values)
 		else:
-			action = self.play_policy.get_action(self.board_to_nn_input(board.board), self.action_value_network,
-			                                     legal_actions)
+			action: Action = self.test_policy.get_action(legal_actions, q_values)
 
-		return action, legal_actions[action]
+		return action
 
 	def _persist_weights(self, prefix: str = '') -> None:
 		# clean and remake the folders
@@ -140,14 +121,14 @@ class DQNTrainableAgent(Agent):
 		self.replay_buffer.persist(path)
 
 		path: str = os.path.join(hyperpar_path, 'vals_{}.pkl'.format(col_time))
-		values = {'decisions_made': self.training_policy.decisions_made, 'n_training_cycles': self.n_training_cycles}
+		values = {'n_training_cycles': self.n_training_cycles}
 		pickle.dump(values, open(path, 'wb'))
 
 	def final_save(self) -> None:
 		self._persist_weights('FINAL_')
 
 	def load_weights(self, file_name=None) -> None:
-		color = ('BLACK' if self.color == Color.BLACK else 'WHITE')
+		color = ('BLACK' if self.color is Color.BLACK else 'WHITE')
 		weights_path = 'network_weights/' + color
 		buffer_path = 'replay_buffers/' + color
 		hyperpar_path = 'hyper_values/' + color
@@ -179,13 +160,15 @@ class DQNTrainableAgent(Agent):
 
 		values = pickle.load(open(path_vals, 'rb'))
 
-		self.training_policy.decisions_made = values['decisions_made']
+		self.train_policy.decisions_made = values['decisions_made']
 		self.n_training_cycles = values['n_training_cycles']
 
 		print('WEIGHTS HAVE BEEN LOADED -> CONTINUING TRAINING')
 
+	@abstractmethod
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
 		raise NotImplementedError
 
-	def board_to_nn_input(self, board: np.ndarray) -> np.array:
+	@abstractmethod
+	def board_to_nn_input(self, board: np.array) -> np.array:
 		raise NotImplementedError

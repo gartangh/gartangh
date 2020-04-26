@@ -13,13 +13,12 @@ class ReplayBuffer:
 	def n_obs(self) -> int:
 		return len(self.buffer)
 
-	def add(self, s: np.ndarray, a: tuple, r: float, terminal: bool) -> None:
+	def add(self, s: np.array, a: tuple, r: float, terminal: bool) -> None:
 		self.buffer.append((s, a, r, terminal))
 
 	def add_final_reward(self, final_reward: float) -> None:
-		last_element = self.buffer.pop()
-		if last_element is not None:
-			self.buffer.append((last_element[0], last_element[1], last_element[2] + final_reward, True))
+		for i in range(len(self.buffer)):
+			self.buffer[i] = (self.buffer[i][0], self.buffer[i][1], self.buffer[i][2] + final_reward, self.buffer[i][3])
 
 	def clear(self) -> None:
 		self.buffer.clear()

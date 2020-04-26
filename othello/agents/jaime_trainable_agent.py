@@ -3,14 +3,11 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 
-from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
-from utils.color import Color
-from utils.immediate_rewards.immediate_reward import ImmediateReward
+from agents.trainable_agent import TrainableAgent
 
 
-class JaimeDQNTrainableAgent(DQNTrainableAgent):
-
-	def __str__(self):
+class JaimeTrainableAgent(TrainableAgent):
+	def __str__(self) -> str:
 		return f'Jaime{super().__str__()}'
 
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
@@ -25,7 +22,7 @@ class JaimeDQNTrainableAgent(DQNTrainableAgent):
 
 		return model
 
-	def board_to_nn_input(self, board: np.ndarray):
+	def board_to_nn_input(self, board: np.array) -> np.array:
 		# Transform board (numpy ndarray) to a numpy 1D array
 		# that can serve as input to the neural network.
 		# There is 1 node per board location: 0 = empty, 1 = own, -1 = opponent

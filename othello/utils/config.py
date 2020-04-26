@@ -1,7 +1,7 @@
 from math import ceil
 
-from game_logic.agents.agent import Agent
-from game_logic.agents.dqn_trainable_agent import DQNTrainableAgent
+from agents.agent import Agent
+from agents.trainable_agent import TrainableAgent
 from utils.plot import Plot
 from utils.color import Color
 
@@ -12,13 +12,13 @@ class Config:
 	             verbose: bool = False, verbose_live: bool = False, random_start: bool = False) -> None:
 		# check parameters
 		assert black.color is Color.BLACK, f'Invalid black agent: black agent\'s color is not black'
-		if not isinstance(black, DQNTrainableAgent):
+		if not isinstance(black, TrainableAgent):
 			assert not train_black, f'Invalid black agent: black agent is not trainable'
 		assert white.color is Color.WHITE, f'Invalid white agent: white agent\'s color is not white'
-		if not isinstance(white, DQNTrainableAgent):
+		if not isinstance(white, TrainableAgent):
 			assert not train_white, f'Invalid white agent: white agent is not trainable'
 		assert 0 <= num_episodes <= 10000, f'Invalid number of episodes: num_episodes should be between 0 and 10000, but got {num_episodes}'
-		if not isinstance(black, DQNTrainableAgent):
+		if not isinstance(black, TrainableAgent):
 			assert plot is None, f'Cannot plot win ratio if black agent is not trainable'
 		if not verbose:
 			assert not verbose_live, f'Cannot be verbose live if verbose is not set'
@@ -37,8 +37,8 @@ class Config:
 		self.plot_every_n_episodes: int = ceil(self.num_episodes / 20)
 
 		self.black.num_games_won = 0
-		if isinstance(black, DQNTrainableAgent):
-			black.set_train_mode(train_black)
+		if isinstance(black, TrainableAgent):
+			black.train_mode = train_black
 		self.white.num_games_won = 0
-		if isinstance(white, DQNTrainableAgent):
-			black.set_train_mode(train_white)
+		if isinstance(white, TrainableAgent):
+			black.train_mode = train_white

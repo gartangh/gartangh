@@ -5,14 +5,14 @@ from utils.color import Color
 
 
 class View:
-	def __init__(self):
+	def __init__(self) -> None:
 		self.controller = None
 		self.game_width = 400
 		self.game_height = 400
 		self._rows = 8
 		self._cols = 8
 
-	def configure_view(self):
+	def configure_view(self) -> None:
 		self._root_window = tkinter.Tk()
 		self._root_window.title('Othello')
 		self._root_window.configure(background='green')
@@ -70,7 +70,7 @@ class View:
 			for col in range(self._cols):
 				if self.controller.game.board.board[row][col] != Color.EMPTY.value:
 					self._draw_cell(row, col)
-				elif (row, col) in list(self.controller.legal_actions.keys()):
+				elif (row, col) in list(self.controller.legal_actions):
 					self._draw_legal_location(row, col)
 
 	def _draw_cell(self, row: int, col: int) -> None:
