@@ -61,7 +61,7 @@ class Controller:
 			self.prev_pass = True  # this agent has no legal actions, pass
 		else:
 			# get next action from legal actions and take it
-			location, legal_directions = self.game.agent.get_next_action(self.game.board, legal_actions_black)
+			location, legal_directions = self.game.agent.next_action(self.game.board, legal_actions_black)
 			self.prev_pass = False  # this agent has legal actions, no pass
 			self.done = self.game.board.take_action(location, legal_directions, Color.BLACK)
 

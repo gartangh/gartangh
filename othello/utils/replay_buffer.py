@@ -3,6 +3,8 @@ import pickle
 
 import numpy as np
 
+from utils.types import Locations
+
 
 class ReplayBuffer:
 	def __init__(self, size: int = 10) -> None:
@@ -13,13 +15,13 @@ class ReplayBuffer:
 	def n_obs(self) -> int:
 		return len(self.buffer)
 
-	def add(self, s: np.array, a: tuple, r: float, terminal: bool) -> None:
-		self.buffer.append((s, a, r, terminal))
+	def add(self, s: np.array, a: tuple, r: float, terminal: bool, legal_locations: Locations) -> None:
+		self.buffer.append((s, a, r, terminal, legal_locations))
 
 	def add_final_reward(self, final_reward: float) -> None:
 		last_element = self.buffer.pop()
 		if last_element is not None:
-			self.buffer.append((last_element[0], last_element[1], last_element[2] + final_reward, True))
+			self.buffer.append((last_element[0], last_element[1], last_element[2] + final_reward, True, last_element[4]))
 
 	def clear(self) -> None:
 		self.buffer.clear()

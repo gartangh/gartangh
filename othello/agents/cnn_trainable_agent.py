@@ -20,7 +20,7 @@ except:
 
 class CNNTrainableAgent(TrainableAgent):
 	def __str__(self) -> str:
-		return f'CNN{super().__str__()}'
+		return f'CNN{super().__str__()})'
 
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
 		model: Sequential = Sequential([

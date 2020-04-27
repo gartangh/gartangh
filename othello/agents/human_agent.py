@@ -1,12 +1,11 @@
 import tkinter as tk
-from typing import List, Tuple
 
 import numpy as np
 
 from agents.agent import Agent
 from game_logic.board import Board
 from utils.color import Color
-from utils.types import Directions, Location
+from utils.types import Directions, Location, Action
 
 
 class HumanAgent(Agent):
@@ -18,7 +17,7 @@ class HumanAgent(Agent):
 		self.first_move = True
 
 	def __str__(self) -> str:
-		return f'Human{super().__str__()}'
+		return f'Human{super().__str__()})'
 
 	def __update_board(self, board: Board, legal_directions: dict) -> None:
 		disks: np.array = board.board
@@ -47,7 +46,7 @@ class HumanAgent(Agent):
 		self.root.update_idletasks()
 		self.root.update()
 
-	def get_next_action(self, board: Board, legal_directions: dict) -> tuple:
+	def next_action(self, board: Board, legal_directions: dict) -> Action:
 		self.__update_board(board, legal_directions)
 		while (not self.clicked):
 			continue

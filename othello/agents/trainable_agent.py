@@ -10,10 +10,10 @@ import tensorflow as tf
 from tensorflow.keras import Sequential
 
 from agents.agent import Agent
+from game_logic.board import Board
 from policies.optimal_trainable_policy import OptimalTrainablePolicy
 from policies.trainable_policy import TrainablePolicy
 from rewards.reward import Reward
-from game_logic.board import Board
 from utils.color import Color
 from utils.replay_buffer import ReplayBuffer
 from utils.types import Action, Actions
@@ -21,7 +21,7 @@ from utils.types import Action, Actions
 
 class TrainableAgent(Agent):
 	def __init__(self, color: Color, train_policy: TrainablePolicy,
-	             immediate_reward: Reward, final_reward: Reward, board_size: int, discount_factor: float = 0.99,
+	             immediate_reward: Reward, final_reward: Reward, board_size: int, discount_factor: float = 0.95,
 	             load_old_weights: bool = False) -> None:
 		super().__init__(color)
 
@@ -32,7 +32,7 @@ class TrainableAgent(Agent):
 		self.board_size = board_size
 		self.discount_factor: float = discount_factor
 
-		self.replay_buffer: ReplayBuffer = ReplayBuffer((board_size ** 2 - 4)//2)
+		self.replay_buffer: ReplayBuffer = ReplayBuffer((board_size ** 2 - 4) // 2)
 		self.train_mode: Union[bool, None] = None
 
 		# old and new network to compare training loss
@@ -49,7 +49,10 @@ class TrainableAgent(Agent):
 		self.n_training_cycles: int = 0
 
 	def __str__(self) -> str:
-		return f'Trainable{super().__str__()}'
+		if self.train_mode:
+			return f'Trainable{super().__str__()}, policy={self.train_policy}, immediate_reward={self.immediate_reward}, final_reward={self.final_reward}'
+		else:
+			return f'Trainable{super().__str__()}, policy={self.test_policy}'
 
 	def train(self, persist_weights: bool = False) -> None:
 		assert self.train_mode, 'Cannot train while not in train mode'
@@ -62,24 +65,23 @@ class TrainableAgent(Agent):
 
 		for i in range(len(self.replay_buffer.buffer) - 1):
 			# get move i: (s, a, r, t)
-			prev_state, prev_action, prev_reward, prev_terminal = self.replay_buffer.buffer[i]
+			prev_state, prev_action, prev_reward, _, locations = self.replay_buffer.buffer[i]
 			# get move i+1: (s', a', r', t')
-			curr_state, curr_action, curr_reward, curr_terminal = self.replay_buffer.buffer[i + 1]
+			curr_state, _, _, _, _ = self.replay_buffer.buffer[i + 1]
 
 			# calculate the new estimate of Q(s,a)
 			# via formula Q(s,a) = r + gamma * max Q(s', a')
 			# but only consider the legal actions a'
-			legal_next_actions = Board._get_legal_actions(curr_state, self.board_size, self.color)
-			if len(legal_next_actions) == 0:
+			if len(locations) == 0:
 				new_q_state_s = prev_reward
 			else:
-				indices = [row * self.board_size + col for (row, col) in legal_next_actions.keys()]
+				indices = [row * self.board_size + col for (row, col) in locations]
 				q_values = old_q_values[i + 1, indices]
 				new_q_state_s = prev_reward + self.discount_factor * q_values.max()
 			old_q_values[i, prev_action[0] * self.board_size + prev_action[1]] = new_q_state_s
 
 		# use final reward
-		last_state, last_action, last_reward, last_terminal = self.replay_buffer.buffer[-1]
+		last_state, last_action, last_reward, last_terminal, _ = self.replay_buffer.buffer[-1]
 		old_q_values[-1, last_action[0] * self.board_size + last_action[1]] = last_reward
 
 		# train the NN on the now updated q_values
@@ -88,7 +90,7 @@ class TrainableAgent(Agent):
 		if persist_weights and self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 			self._persist_weights()
 
-	def get_next_action(self, board: Board, legal_actions: Actions) -> Action:
+	def next_action(self, board: Board, legal_actions: Actions) -> Action:
 		q_values = self.action_value_network.predict(np.expand_dims(self.board_to_nn_input(board.board), axis=0))
 		if self.train_mode:
 			action: Action = self.train_policy.get_action(legal_actions, q_values)
@@ -131,9 +133,7 @@ class TrainableAgent(Agent):
 		color = ('BLACK' if self.color is Color.BLACK else 'WHITE')
 		weights_path = 'network_weights/' + color
 		buffer_path = 'replay_buffers/' + color
-		hyperpar_path = 'hyper_values/' + color
 		if file_name is None:
-			# path_network = tf.train.latest_checkpoint(self.weight_persist_path)
 			all_paths = os.listdir(weights_path)
 			all_paths = sorted(all_paths, reverse=True)
 			path_network = all_paths[0] if len(all_paths) > 0 else None
@@ -145,23 +145,14 @@ class TrainableAgent(Agent):
 			name = name.replace('.h5', '.pkl')
 			path_replay = name.replace('weights_agent_', 'replay_buffer_agent_')
 			path_replay = os.path.join(buffer_path, path_replay)
-
-			path_vals = name.replace('weights_agent_', 'vals_')
-			path_vals = os.path.join(hyperpar_path, path_vals)
 		else:
 			path_network = os.path.join(weights_path, 'weights_agent_' + file_name + '.h5')
 			path_replay = os.path.join(buffer_path, 'replay_buffer_agent_' + file_name + '.pkl')
-			path_vals = os.path.join(hyperpar_path, 'vals_' + file_name + '.pkl')
 
 		self.action_value_network.load_weights(path_network)  # loading in the action value network weights
 		self.action_value_network = tf.keras.models.load_model(path_network)
 
 		self.replay_buffer.load(path_replay)
-
-		values = pickle.load(open(path_vals, 'rb'))
-
-		self.train_policy.decisions_made = values['decisions_made']
-		self.n_training_cycles = values['n_training_cycles']
 
 		print('WEIGHTS HAVE BEEN LOADED -> CONTINUING TRAINING')
 

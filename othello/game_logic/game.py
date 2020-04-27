@@ -1,23 +1,21 @@
 import numpy as np
 from termcolor import colored
-from typing import List, Tuple, Dict
 
 from agents.agent import Agent
 from agents.trainable_agent import TrainableAgent
 from game_logic.board import Board
 from utils.color import Color
 from utils.config import Config
-from utils.global_config import GlobalConfig
 from utils.types import Actions
 
 
 class Game:
-	def __init__(self, global_config: GlobalConfig, config: Config, episode: int) -> None:
-		self.global_config: GlobalConfig = global_config
+	def __init__(self, board_size: int, config: Config, episode: int) -> None:
+		self.board_size = board_size
 		self.config: Config = config
 		self.episode: int = episode
 
-		self.board: Board = Board(global_config.board_size, random_start=config.random_start)
+		self.board: Board = Board(self.board_size, random_start=config.random_start)
 		self.ply = self.board.num_black_disks + self.board.num_white_disks - 4
 		self.agent: Agent = self.config.black
 		self.prev_pass: bool = False
@@ -52,7 +50,7 @@ class Game:
 				self.prev_pass = True  # this agent has no legal actions, pass
 			else:
 				# get next action from legal actions and take it
-				location, legal_directions = self.agent.get_next_action(self.board, legal_actions)
+				location, legal_directions = self.agent.next_action(self.board, legal_actions)
 				if self.config.verbose_live:
 					print(f'\tLegal actions: {list(legal_actions)}')
 					board_copy: Board = self.board.get_deepcopy()
@@ -75,7 +73,7 @@ class Game:
 						print(f'Immediate reward: {immediate_reward}')
 					# remember the board, the taken action and the resulting reward
 					if isinstance(self.agent, TrainableAgent):
-						self.agent.replay_buffer.add(prev_board, location, immediate_reward, False)
+						self.agent.replay_buffer.add(prev_board, location, immediate_reward, False, list(legal_actions))
 
 			if self.config.verbose_live:
 				print(self.board)

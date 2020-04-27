@@ -2,12 +2,13 @@ from typing import Tuple, Union
 
 from game_logic.board import Board
 from policies.policy import Policy
+from policies.untrainable_policy import UntrainablePolicy
 from rewards.reward import Reward
 from utils.color import Color
 from utils.types import Actions, Location, Directions, Action
 
 
-class MinimaxPolicy(Policy):
+class MinimaxUntrainablePolicy(UntrainablePolicy):
 	def __init__(self, immediate_reward: Reward, depth: int) -> None:
 		assert 2 <= depth <= 3, f'Invalid depth: depth should be between 2 and 3, but got {depth}'
 

@@ -9,7 +9,7 @@ from utils.reshapes import split_flatten
 
 class DenseTrainableAgent(TrainableAgent):
 	def __str__(self) -> str:
-		return f'Dense{super().__str__()}'
+		return f'Dense{super().__str__()})'
 
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:
 		# input: 2 nodes per board location:

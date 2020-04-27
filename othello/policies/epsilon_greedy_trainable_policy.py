@@ -2,9 +2,8 @@ import random
 
 import numpy as np
 
-from policies.random_policy import RandomPolicy
 from policies.trainable_policy import TrainablePolicy
-from utils.types import Action, Actions
+from utils.types import Action, Actions, Location, Directions
 
 
 class EpsilonGreedyTrainablePolicy(TrainablePolicy):
@@ -12,14 +11,14 @@ class EpsilonGreedyTrainablePolicy(TrainablePolicy):
 		self.inner_policy: TrainablePolicy = inner_policy
 		self.epsilon: float = epsilon
 
-		self.random_policy: RandomPolicy = RandomPolicy()
-
 	def __str__(self) -> str:
-		return f'EpsilonGreedy{super().__str__()}'
+		return f'EpsilonGreedy{super().__str__()}(inner_policy={self.inner_policy})'
 
 	def get_action(self, legal_actions: Actions, q_values: np.array) -> Action:
 		if random.random() < self.epsilon:
-			action: Action = self.random_policy.get_action(legal_actions)
+			location: Location = random.choice(list(legal_actions))
+			directions: Directions = legal_actions[location]
+			action: Action = (location, directions)
 		else:
 			action: Action = self.inner_policy.get_action(legal_actions, q_values)
 

@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple, Union
+from typing import Union
 
 import numpy as np
 from numpy.random import choice
@@ -34,18 +34,20 @@ class Board:
 		board[board_size // 2, board_size // 2 - 1] = 0  # black
 		board[board_size // 2 - 1, board_size // 2] = 0  # black
 		board[board_size // 2, board_size // 2] = 1  # white
+
 		self.board: np.array = board
+		self.num_black_disks: int = 2
+		self.num_white_disks: int = 2
+		self.num_free_spots: int = board_size ** 2 - 4
 
-		if random_start:
-			# 0, 1, or 2 plays (0, 2, or 4 plies)
-			num_plays: int = choice(3, 1, p=[0.2, 0.4, 0.4])[0]
+		self.prev_board: Union[np.array, None] = None
+		self.prev_num_black_disks: Union[int, None] = None
+		self.prev_num_white_disks: Union[int, None] = None
+		self.prev_num_free_spots: Union[int, None] = None
 
-		if not random_start or num_plays == 0:
-			self.num_black_disks: int = 2
-			self.num_white_disks: int = 2
-
-			self.prev_board: Union[np.array, None] = None
-		else:
+		# 0, 1, or 2 plays (0, 2, or 4 plies)
+		num_plays: int = choice(3, 1, p=[0.2, 0.4, 0.4])[0]
+		if random_start and num_plays > 0:
 			# adding random start at 2 or 4 steps in future (B - W or B - W - B - W)
 			for play in range(num_plays):
 				legal_actions: Actions = self._get_legal_actions(self.board, self.board_size, Color.BLACK)
@@ -60,11 +62,6 @@ class Board:
 				location: Location = random.choice(list(legal_actions))
 				directions: Directions = legal_actions[location]
 				self.take_action(location, directions, Color.WHITE)
-
-			self.num_black_disks: int = 2 + num_plays
-			self.num_white_disks: int = 2 + num_plays
-
-		self.num_free_spots: int = board_size ** 2 - self.num_black_disks - self.num_white_disks
 
 	def __str__(self) -> str:
 		string: str = '\t\t\u2502'
@@ -110,6 +107,9 @@ class Board:
 
 		# save state before action
 		self.prev_board: np.array = np.copy(self.board)
+		self.prev_num_black_disks: int = self.num_black_disks
+		self.prev_num_white_disks: int = self.num_white_disks
+		self.prev_num_free_spots: int = self.prev_num_free_spots
 
 		# put down own disk in the provided location
 		self.board[location[0], location[1]]: int = color.value

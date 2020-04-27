@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Union
 
+import numpy as np
+
 from policies.trainable_policy import TrainablePolicy
 from utils.types import Action, Actions
 
@@ -17,7 +19,7 @@ class AnnealingTrainablePolicy(TrainablePolicy):
 	def update(self, episode: int) -> None:
 		raise NotImplementedError
 
-	def get_action(self, legal_actions: Actions, q_values) -> Action:
+	def get_action(self, legal_actions: Actions, q_values: np.array) -> Action:
 		action: Action = self.inner_policy.get_action(legal_actions, q_values)
 
 		return action

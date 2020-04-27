@@ -1,27 +1,27 @@
 from typing import List
 
 from colorama import init
-from termcolor import colored
 from tqdm import tqdm
 
+from agents.agent import Agent
 from agents.cnn_trainable_agent import CNNTrainableAgent
+from agents.dense_trainable_agent import DenseTrainableAgent
 from agents.human_agent import HumanAgent
-from agents.minimax_agent import MinimaxAgent
-from agents.random_agent import RandomAgent
-from agents.risk_regions_agent import RiskRegionsAgent
 from agents.trainable_agent import TrainableAgent
+from agents.untrainable_agent import UntrainableAgent
 from game_logic.game import Game
 from gui.controller import Controller
 from policies.annealing_trainable_policy import AnnealingTrainablePolicy
 from policies.epsilon_greedy_annealing_trainable_policy import EpsilonGreedyAnnealingTrainablePolicy
-from policies.top_k_random_trainable_policy import TopKRandomTrainablePolicy
-from rewards.minimax_heuristic import MinimaxHeuristic
-from rewards.risk_regions_reward import RiskRegionsReward
-from rewards.fixed_values_reward import FixedValuesReward
+from policies.random_untrainable_policy import RandomUntrainablePolicy
+from policies.top_k_normalized_trainable_policy import TopKNormalizedTrainablePolicy
+from policies.weights_untrainable_policy import WeightsUntrainablePolicy
+from rewards.difference_reward import DifferenceReward
+from rewards.fixed_reward import FixedReward
 from utils.color import Color
 from utils.config import Config
-from utils.global_config import GlobalConfig
 from utils.plot import Plot
+from utils.risk_regions import risk_regions, bench
 
 
 def main() -> None:
@@ -45,7 +45,7 @@ def main() -> None:
 
 	for episode in tqdm(range(1, config.num_episodes + 1)):
 		# create new game
-		game: Game = Game(global_config, config, episode)
+		game: Game = Game(board_size, config, episode)
 		if isinstance(white, HumanAgent):
 			# create GUI controller
 			controller: Controller = Controller(game)
@@ -67,7 +67,9 @@ def main() -> None:
 			config.plot.update(game.board.num_black_disks, game.board.num_white_disks, episode,
 			                   config.plot_every_n_episodes)
 
-	print_scores(config.num_episodes, black.num_games_won, white.num_games_won)
+	ties: int = config.num_episodes - black.num_games_won - white.num_games_won
+	print(f'({black.num_games_won:>4}|{white.num_games_won:>4}|{ties:>4}) / {config.num_episodes:>4}')
+	print(f'win ratio: {(black.num_games_won - white.num_games_won) / config.num_episodes}\n')
 
 	# save models
 	if isinstance(black, TrainableAgent) and black.train_mode:
@@ -80,74 +82,64 @@ def main() -> None:
 	white.reset()
 
 
-def print_scores(num_episodes: int, black_won: int, white_won: int) -> None:
-	ties: int = num_episodes - black_won - white_won
-	if black_won > white_won:
-		print(colored(f'BLACK {black_won:>5}/{num_episodes:>5} ({black_won:>5}|{white_won:>5}|{ties:>5})\n', 'red'))
-	elif black_won < white_won:
-		print(colored(f'WHITE {white_won:>5}/{num_episodes:>5} ({black_won:>5}|{white_won:>5}|{ties:>5})\n', 'green'))
-	else:
-		print(colored(f'DRAW  {black_won:>5}/{num_episodes:>5} ({black_won:>5}|{white_won:>5}|{ties:>5})\n', 'cyan'))
-
-
 if __name__ == '__main__':
-	# one-time global configuration
-	global_config: GlobalConfig = GlobalConfig(board_size=8, gui_size=400)
+	# board size
+	board_size: int = 8
 
 	# trainable black agent
-	black: TrainableAgent = CNNTrainableAgent(
+	black: Agent = DenseTrainableAgent(
 		color=Color.BLACK,
 		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
-			inner_policy=TopKRandomTrainablePolicy(board_size=global_config.board_size, k=3),
+			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
 			start_epsilon=1.0,
-			stop_epsilon=0.0,
+			stop_epsilon=0.2,
 		),
-		immediate_reward=RiskRegionsReward(board_size=global_config.board_size),
-		final_reward=FixedValuesReward(win=1000, draw=100, lose=-1000),
-		board_size=global_config.board_size,
+		immediate_reward=DifferenceReward(),
+		final_reward=FixedReward(win=1000, draw=100, loss=-1000),
+		board_size=board_size,
 	)
 
 	# init plot
-	plot: Plot = Plot(black)
+	if isinstance(black, TrainableAgent):
+		plot: Plot = Plot(black)
+	else:
+		plot: None = None
 
 	# train strategy
 	train_configs: List[Config] = [
-		# RandomAgent
+		# random
 		Config(
 			black=black,
 			train_black=True,
-			white=RandomAgent(color=Color.WHITE),
+			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
 			train_white=False,
-			num_episodes=200,
+			num_episodes=25_0,
 			plot=plot,
 			plot_win_ratio_live=True,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
 		),
-		# RiskRegionsAgent
+		# risk regions
 		Config(
 			black=black,
 			train_black=True,
-			white=RiskRegionsAgent(color=Color.WHITE, board_size=global_config.board_size),
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
 			train_white=False,
-			num_episodes=100,
+			num_episodes=25_0,
 			plot=plot,
 			plot_win_ratio_live=True,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
 		),
-		# MiniMaxAgent
+		# bench
 		Config(
 			black=black,
 			train_black=True,
-			white=MinimaxAgent(color=Color.WHITE,
-			                   immediate_reward=MinimaxHeuristic(board_size=global_config.board_size),
-			                   depth=2,
-			                   ),
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
 			train_white=False,
-			num_episodes=100,
+			num_episodes=25_0,
 			plot=plot,
 			plot_win_ratio_live=True,
 			verbose=False,
@@ -167,30 +159,55 @@ if __name__ == '__main__':
 		Config(
 			black=black,
 			train_black=False,
-			white=RandomAgent(color=Color.WHITE),
+			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
 			train_white=False,
-			num_episodes=100,
+			num_episodes=1_0,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
 			verbose_live=False,
 			random_start=False,
-		)
+		),
+		Config(
+			black=black,
+			train_black=False,
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
+			train_white=False,
+			num_episodes=1_0,
+			plot=None,
+			plot_win_ratio_live=False,
+			verbose=True,
+			verbose_live=False,
+			random_start=False,
+		),
+		Config(
+			black=black,
+			train_black=False,
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
+			train_white=False,
+			num_episodes=1_0,
+			plot=None,
+			plot_win_ratio_live=False,
+			verbose=True,
+			verbose_live=False,
+			random_start=False,
+		),
+
 	]
 	for config in test_configs:
 		main()
 
 	# play against a human
-	config: Config = Config(
-		black=black,
-		train_black=False,
-		white=HumanAgent(color=Color.WHITE),
-		train_white=False,
-		num_episodes=3,
-		plot=None,
-		plot_win_ratio_live=False,
-		verbose=True,
-		verbose_live=False,
-		random_start=False,
-	)
-	main()
+	# config: Config = Config(
+	# 	black=black,
+	# 	train_black=False,
+	# 	white=HumanAgent(color=Color.WHITE),
+	# 	train_white=False,
+	# 	num_episodes=3,
+	# 	plot=None,
+	# 	plot_win_ratio_live=False,
+	# 	verbose=True,
+	# 	verbose_live=False,
+	# 	random_start=False,
+	# )
+	# main()

@@ -8,7 +8,7 @@ from policies.epsilon_greedy_annealing_trainable_policy import EpsilonGreedyAnne
 
 
 class Plot:
-	def __init__(self, black: TrainableAgent = None) -> None:
+	def __init__(self, black: TrainableAgent) -> None:
 		self.black: TrainableAgent = black
 		self.win_rates: List[float] = [0.0]
 		self.episodes: List[int] = [0]
@@ -48,7 +48,8 @@ class Plot:
 			indices = slice(self.index_opponent_switch[i],
 			                self.index_opponent_switch[i + 1] if i + 1 < len(self.index_opponent_switch) else -1)
 			ax.plot(self.episodes[indices], self.win_rates[indices])
-		ax.plot(self.episodes, self.epsilons, color='green', linestyle='--')
+		if isinstance(self.black.train_policy, EpsilonGreedyAnnealingTrainablePolicy):
+			ax.plot(self.episodes, self.epsilons, color='green', linestyle='--')
 		# uncomment the line below to make the name contain the time
 		# fig.savefig('{}winratio{}.png'.format(path, datetime.datetime.now().strftime('%y%m%d%H%M%S')))
 		# else:

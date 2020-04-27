@@ -12,7 +12,7 @@ class Agent:
 		self.num_games_won: int = 0
 
 	def __str__(self) -> str:
-		return f'Agent: {self.color.name}'
+		return f'Agent (color={self.color.name}'
 
 	def update_score(self, board: Board) -> None:
 		if self.color is Color.BLACK and board.num_black_disks > board.num_white_disks:
@@ -24,5 +24,5 @@ class Agent:
 		self.num_games_won: int = 0
 
 	@abstractmethod
-	def get_next_action(self, board: Board, legal_actions: Actions) -> Action:
+	def next_action(self, board: Board, legal_actions: Actions) -> Action:
 		raise NotImplementedError

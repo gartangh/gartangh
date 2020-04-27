@@ -3,23 +3,24 @@ from typing import Union
 
 import numpy as np
 
-from policies.policy import Policy
-from utils.risk_regions import risk_regions
+from game_logic.board import Board
+from policies.untrainable_policy import UntrainablePolicy
+from utils.color import Color
 from utils.types import Actions, Location, Directions, Action, Locations
 
 
-class RiskRegionsPolicy(Policy):
-	def __init__(self, board_size: int) -> None:
-		self._weights: np.array = risk_regions(board_size)
+class WeightsUntrainablePolicy(UntrainablePolicy):
+	def __init__(self, weights: np.array) -> None:
+		self.weights: np.array = weights
 
 	def __str__(self) -> str:
-		return f'RiskRegions{super().__str__()}'
+		return f'Weights{super().__str__()}'
 
-	def get_action(self, legal_actions: Actions) -> Action:
+	def get_action(self, board: Board, legal_actions: Actions, color: Color) -> Action:
 		best_locations: Locations = []
 		best_score: Union[int, None] = None
 		for location in legal_actions:
-			score: int = self._weights[location]
+			score: int = self.weights[location]
 			if best_score is None or score > best_score:
 				best_score: int = score
 				best_locations: Locations = [location]
