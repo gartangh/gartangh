@@ -128,7 +128,7 @@ if __name__ == '__main__':
 			train_black=True,
 			white=white,
 			train_white=True,
-			num_episodes=1_00,
+			num_episodes=1_000,
 			plot=plot,
 			plot_win_ratio_live=False,
 			verbose=False,
