@@ -24,8 +24,13 @@ class TopKNormalizedTrainablePolicy(TrainablePolicy):
 		indices: List[int] = np.argpartition(q_values, -k)[-k:]
 		q_values: np.array = q_values[indices]
 		locations: np.array = np.array(list(legal_actions))[indices]
-		q_values /= sum(q_values)
-		index: int = choice(np.arange(len(q_values)), p=q_values)
+		q_values1 = q_values / sum(q_values)
+		try:
+			index: int = choice(np.arange(len(q_values1)), p=q_values1)
+		except:
+			print("q_values", q_values)
+			print("indices", indices)
+			print("q_values1", q_values1)
 		location: Location = locations[index]
 		directions: Directions = legal_actions[(location[0], location[1])]
 		action: Action = (location, directions)
