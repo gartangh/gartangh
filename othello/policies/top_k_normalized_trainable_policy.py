@@ -23,9 +23,10 @@ class TopKNormalizedTrainablePolicy(TrainablePolicy):
 		k: int = self.k if self.k <= len(legal_actions) else len(legal_actions)
 		indices: List[int] = np.argpartition(q_values, -k)[-k:]
 		q_values: np.array = q_values[indices]
-		try:
-			q_values /= np.sum(q_values)
-		except:
+		q_sum = np.sum(q_values)
+		if q_sum <= 1e-40:
+			q_values /= q_sum
+		else:
 			q_values: np.array([1/k]*k)
 		locations: np.array = np.array(list(legal_actions))[indices]
 		index: int = choice(np.arange(len(q_values)), p=q_values)
