@@ -42,4 +42,4 @@ class Config:
 			black.train_mode = train_black
 		self.white.num_games_won = 0
 		if isinstance(white, TrainableAgent):
-			black.train_mode = train_white
+			white.train_mode = train_white
