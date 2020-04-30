@@ -122,15 +122,15 @@ if __name__ == '__main__':
 
 	# train strategy
 	train_configs: List[Config] = [
-		# self_play
+		# self play
 		Config(
 			black=black,
 			train_black=True,
 			white=white,
 			train_white=True,
-			num_episodes=1_00,
+			num_episodes=1_000,
 			plot=plot,
-			plot_win_ratio_live=False,
+			plot_win_ratio_live=True,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
@@ -191,7 +191,7 @@ if __name__ == '__main__':
 			train_white=False,
 			num_episodes=200,
 			plot=None,
-			plot_win_ratio_live=False,
+			plot_win_ratio_live=True,
 			verbose=True,
 			verbose_live=False,
 			random_start=False,
