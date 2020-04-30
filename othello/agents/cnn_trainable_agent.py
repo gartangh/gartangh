@@ -43,4 +43,4 @@ class CNNTrainableAgent(TrainableAgent):
 		return model
 
 	def board_to_nn_input(self, board: np.array) -> np.array:
-		return split(board)
+		return split(board, self.color)
