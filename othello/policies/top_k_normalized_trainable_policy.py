@@ -28,7 +28,6 @@ class TopKNormalizedTrainablePolicy(TrainablePolicy):
 			q_values /= q_sum
 		else:
 			q_values = np.array([1/k]*k)
-			print(q_values)
 		locations: np.array = np.array(list(legal_actions))[indices]
 		index: int = choice(np.arange(len(q_values)), p=q_values)
 		location: Location = locations[index]
