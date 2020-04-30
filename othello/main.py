@@ -87,7 +87,7 @@ if __name__ == '__main__':
 	board_size: int = 8
 
 	# trainable black agent
-	black: Agent = DenseTrainableAgent(
+	black: Agent = CNNTrainableAgent(
 		color=Color.BLACK,
 		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
 			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 			stop_epsilon=0.2,
 		),
 		immediate_reward=DifferenceReward(),
-		final_reward=FixedReward(win=1000, draw=100, loss=-1000),
+		final_reward=FixedReward(win=3000, draw=-100, loss=-3000),
 		board_size=board_size,
 	)
 
@@ -113,9 +113,9 @@ if __name__ == '__main__':
 			train_black=True,
 			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
 			train_white=False,
-			num_episodes=25_0,
+			num_episodes=25_000,
 			plot=plot,
-			plot_win_ratio_live=True,
+			plot_win_ratio_live=False,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
@@ -126,9 +126,9 @@ if __name__ == '__main__':
 			train_black=True,
 			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
 			train_white=False,
-			num_episodes=25_0,
+			num_episodes=25_000,
 			plot=plot,
-			plot_win_ratio_live=True,
+			plot_win_ratio_live=False,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
@@ -139,9 +139,9 @@ if __name__ == '__main__':
 			train_black=True,
 			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
 			train_white=False,
-			num_episodes=25_0,
+			num_episodes=25_000,
 			plot=plot,
-			plot_win_ratio_live=True,
+			plot_win_ratio_live=False,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 			train_black=False,
 			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
 			train_white=False,
-			num_episodes=1_0,
+			num_episodes=1_000,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
@@ -173,7 +173,7 @@ if __name__ == '__main__':
 			train_black=False,
 			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
 			train_white=False,
-			num_episodes=1_0,
+			num_episodes=1_000,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 			train_black=False,
 			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
 			train_white=False,
-			num_episodes=1_0,
+			num_episodes=1_000,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
