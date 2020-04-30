@@ -17,6 +17,7 @@ from policies.random_untrainable_policy import RandomUntrainablePolicy
 from policies.top_k_normalized_trainable_policy import TopKNormalizedTrainablePolicy
 from policies.weights_untrainable_policy import WeightsUntrainablePolicy
 from rewards.difference_reward import DifferenceReward
+from rewards.no_reward import NoReward
 from rewards.fixed_reward import FixedReward
 from utils.color import Color
 from utils.config import Config
@@ -91,11 +92,11 @@ if __name__ == '__main__':
 		color=Color.BLACK,
 		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
 			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
-			start_epsilon=1.0,
-			stop_epsilon=0.2,
+			start_epsilon=0.1,
+			stop_epsilon=0,
 		),
-		immediate_reward=DifferenceReward(),
-		final_reward=FixedReward(win=3000, draw=-100, loss=-3000),
+		immediate_reward=NoReward(),
+		final_reward=FixedReward(win=1, draw=0.5, loss=0),
 		board_size=board_size,
 	)
 
