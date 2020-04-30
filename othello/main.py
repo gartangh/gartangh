@@ -97,7 +97,7 @@ if __name__ == '__main__':
 		),
 		immediate_reward=NoReward(),
 		final_reward=FixedReward(win=1, draw=0.5, loss=0),
-		board_size=board_size,
+		board_size=board_size
 	)
 
 	# init plot
@@ -128,54 +128,52 @@ if __name__ == '__main__':
 			train_black=True,
 			white=white,
 			train_white=True,
-			num_episodes=1_000_000,
+			num_episodes=1_00,
 			plot=plot,
 			plot_win_ratio_live=False,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
 		),
-		"""
-		# random
-		Config(
-			black=black,
-			train_black=True,
-			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
-			train_white=False,
-			num_episodes=25_000,
-			plot=plot,
-			plot_win_ratio_live=False,
-			verbose=False,
-			verbose_live=False,
-			random_start=True,
-		),
-		# risk regions
-		Config(
-			black=black,
-			train_black=True,
-			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
-			train_white=False,
-			num_episodes=25_000,
-			plot=plot,
-			plot_win_ratio_live=False,
-			verbose=False,
-			verbose_live=False,
-			random_start=True,
-		),
-		# bench
-		Config(
-			black=black,
-			train_black=True,
-			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
-			train_white=False,
-			num_episodes=25_000,
-			plot=plot,
-			plot_win_ratio_live=False,
-			verbose=False,
-			verbose_live=False,
-			random_start=True,
-		),
-		"""
+		# # random
+		# Config(
+		# 	black=black,
+		# 	train_black=True,
+		# 	white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
+		# 	train_white=False,
+		# 	num_episodes=25_000,
+		# 	plot=plot,
+		# 	plot_win_ratio_live=False,
+		# 	verbose=False,
+		# 	verbose_live=False,
+		# 	random_start=True,
+		# ),
+		# # risk regions
+		# Config(
+		# 	black=black,
+		# 	train_black=True,
+		# 	white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
+		# 	train_white=False,
+		# 	num_episodes=25_000,
+		# 	plot=plot,
+		# 	plot_win_ratio_live=False,
+		# 	verbose=False,
+		# 	verbose_live=False,
+		# 	random_start=True,
+		# ),
+		# # bench
+		# Config(
+		# 	black=black,
+		# 	train_black=True,
+		# 	white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
+		# 	train_white=False,
+		# 	num_episodes=25_000,
+		# 	plot=plot,
+		# 	plot_win_ratio_live=False,
+		# 	verbose=False,
+		# 	verbose_live=False,
+		# 	random_start=True,
+		# ),
 	]
 	for config in train_configs:
 		main()
@@ -191,7 +189,7 @@ if __name__ == '__main__':
 			train_black=False,
 			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
 			train_white=False,
-			num_episodes=1_000,
+			num_episodes=200,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
@@ -203,7 +201,7 @@ if __name__ == '__main__':
 			train_black=False,
 			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
 			train_white=False,
-			num_episodes=1_000,
+			num_episodes=200,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
@@ -215,7 +213,7 @@ if __name__ == '__main__':
 			train_black=False,
 			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
 			train_white=False,
-			num_episodes=1_000,
+			num_episodes=200,
 			plot=None,
 			plot_win_ratio_live=False,
 			verbose=True,
