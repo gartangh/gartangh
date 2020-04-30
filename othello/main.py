@@ -70,7 +70,7 @@ def main() -> None:
 
 	ties: int = config.num_episodes - black.num_games_won - white.num_games_won
 	print(f'({black.num_games_won:>4}|{white.num_games_won:>4}|{ties:>4}) / {config.num_episodes:>4}')
-	print(f'win ratio: {(black.num_games_won - white.num_games_won) / config.num_episodes}\n')
+	print(f'win ratio: {black.num_games_won / config.num_episodes}\n')
 
 	# save models
 	if isinstance(black, TrainableAgent) and black.train_mode:
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 			train_black=True,
 			white=white,
 			train_white=True,
-			num_episodes=1_000,
+			num_episodes=1_00,
 			plot=plot,
 			plot_win_ratio_live=True,
 			verbose=False,
@@ -191,7 +191,7 @@ if __name__ == '__main__':
 			train_white=False,
 			num_episodes=200,
 			plot=None,
-			plot_win_ratio_live=True,
+			plot_win_ratio_live=False,
 			verbose=True,
 			verbose_live=False,
 			random_start=False,
