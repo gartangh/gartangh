@@ -59,9 +59,9 @@ class Plot:
 		if num_black_disks > num_white_disks:
 			self.last_matches.append(1)
 		elif num_black_disks < num_white_disks:
-			self.last_matches.append(-1)
-		else:
 			self.last_matches.append(0)
+		else:
+			self.last_matches.append(0.5)
 
 		if episode % plot_every_n_episodes == 0 and len(self.last_matches) > 0:
 			self.win_rates.append(sum(self.last_matches) / len(self.last_matches))
