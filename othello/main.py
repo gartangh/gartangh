@@ -88,7 +88,7 @@ if __name__ == '__main__':
 	board_size: int = 8
 
 	# trainable black agent
-	black: Agent = CNNTrainableAgent(
+	black: Agent = DenseTrainableAgent(
 		color=Color.BLACK,
 		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
 			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
@@ -106,8 +106,36 @@ if __name__ == '__main__':
 	else:
 		plot: None = None
 
+	white: Agent = DenseTrainableAgent(
+		color=Color.WHITE,
+		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
+			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
+			start_epsilon=0.1,
+			stop_epsilon=0,
+		),
+		immediate_reward=NoReward(),
+		final_reward=FixedReward(win=1, draw=0.5, loss=0),
+		board_size=board_size
+	)
+	# share same networks:
+	white.action_value_network = black.action_value_network
+
 	# train strategy
 	train_configs: List[Config] = [
+		# self_play
+		Config(
+			black=black,
+			train_black=True,
+			white=white,
+			train_white=True,
+			num_episodes=1_000_000,
+			plot=plot,
+			plot_win_ratio_live=False,
+			verbose=False,
+			verbose_live=False,
+			random_start=True,
+		),
+		"""
 		# random
 		Config(
 			black=black,
@@ -147,6 +175,7 @@ if __name__ == '__main__':
 			verbose_live=False,
 			random_start=True,
 		),
+		"""
 	]
 	for config in train_configs:
 		main()
