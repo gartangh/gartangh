@@ -12,10 +12,6 @@ class DenseTrainableAgent(TrainableAgent):
 		return f'Dense{super().__str__()})'
 
 	def create_model(self, verbose: bool = False, lr: float = 0.01) -> Sequential:
-		# input: 2 nodes per board location:
-		#              - 1 node that is 0 if location does not contain black, else 1
-		#              - 1 node that is 0 if location does not contain white, else 1
-		# output: 1 node per board location, with probabilities to take action on that location
 		model: Sequential = Sequential([
 			Input(shape=(self.board_size ** 2)),
 			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),

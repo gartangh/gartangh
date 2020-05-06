@@ -131,11 +131,6 @@ dmypy.json
 #pycharm
 .idea/
 
-# OWN
 # Output directories
-network_weights/
-replay_buffers/
-hyper_values/
-log.txt
-backup/
 plots/
+weights/

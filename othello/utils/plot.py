@@ -11,14 +11,21 @@ class Plot:
 
 	def update(self, episode: int, scores: defaultdict) -> None:
 		self.episodes.append(episode)
-		for win_ratios in scores.values():
-			plt.plot(self.episodes, win_ratios)
+
+		plt.plot(self.episodes, scores['epsilon'], linestyle='--')
+
+		for key, win_ratios in scores.items():
+			if key != 'epsilon':
+				plt.plot(self.episodes, win_ratios)
 
 		# draw
 		plt.title('Evaluation')
 		plt.xlabel('episode')
 		plt.ylabel('win ratio')
 		plt.yticks(np.arange(0, 100 + 1, 10))
+		fig = plt.gcf()
 		plt.draw()
 		plt.pause(0.001)
-		plt.savefig('plots/Evaluation.png')
+
+		# save plot
+		fig.savefig('plots\\plot.png')

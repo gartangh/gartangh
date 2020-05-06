@@ -1,12 +1,7 @@
-import datetime
-import os
-import pickle
-import shutil
 from abc import abstractmethod
 from typing import Union
 
 import numpy as np
-import tensorflow as tf
 from tensorflow.keras import Sequential
 
 from agents.agent import Agent
@@ -20,11 +15,11 @@ from utils.types import Action, Actions
 
 
 class TrainableAgent(Agent):
-	def __init__(self, color: Color, train_policy: TrainablePolicy,
-	             immediate_reward: Reward, final_reward: Reward, board_size: int, discount_factor: float = 0.95,
-	             load_old_weights: bool = False) -> None:
+	def __init__(self, color: Color, model_name: str, train_policy: TrainablePolicy, immediate_reward: Reward,
+	             final_reward: Reward, board_size: int, discount_factor: float = 0.95) -> None:
 		super().__init__(color)
 
+		self.weights_path: str = f'weights\\{model_name}_{self.color.name}'
 		self.train_policy: TrainablePolicy = train_policy
 		self.test_policy: OptimalTrainablePolicy = OptimalTrainablePolicy(board_size)
 		self.immediate_reward: Reward = immediate_reward
@@ -35,18 +30,16 @@ class TrainableAgent(Agent):
 		self.replay_buffer: ReplayBuffer = ReplayBuffer((board_size ** 2 - 4) // 2)
 		self.train_mode: Union[bool, None] = None
 
-		# old and new network to compare training loss
-		self.dnn: Sequential = self.create_model()
-
-		if load_old_weights:
+		try:
+			# create new model
+			self.dnn: Sequential = self.create_model()
+			# load existing weights
 			self.load_weights()
-
-		# save the weights of deep neural network periodically, i.e. when
-		# self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
-		self.persist_weights_every_n_times_trained: int = int(1e3)
-
-		# Bookkeeping values
-		self.n_training_cycles: int = 0
+		except:
+			# create new model
+			self.dnn: Sequential = self.create_model()
+			# save initial weights
+			self.save_weights()
 
 	def __str__(self) -> str:
 		if self.train_mode:
@@ -54,10 +47,8 @@ class TrainableAgent(Agent):
 		else:
 			return f'Trainable{super().__str__()}, policy={self.test_policy}'
 
-	def train(self, persist_weights: bool = False) -> None:
+	def train(self) -> None:
 		assert self.train_mode, 'Cannot train while not in train mode'
-
-		self.n_training_cycles += 1
 
 		states = np.array([self.board_to_nn_input(move[0]) for move in self.replay_buffer.buffer])
 		# the goal is to update these old_q_values
@@ -87,9 +78,6 @@ class TrainableAgent(Agent):
 		# train the NN on the now updated q_values
 		self.dnn.train_on_batch(states, old_q_values)
 
-		if persist_weights and self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
-			self._persist_weights()
-
 	def next_action(self, board: Board, legal_actions: Actions) -> Action:
 		q_values = self.dnn.predict(np.expand_dims(self.board_to_nn_input(board.board), axis=0))
 		if self.train_mode:
@@ -99,62 +87,13 @@ class TrainableAgent(Agent):
 
 		return action
 
-	def _persist_weights(self, prefix: str = '') -> None:
-		# clean and remake the folders
-		weights_path: str = 'network_weights/' + self.color.name
-		if os.path.exists(weights_path):
-			shutil.rmtree(weights_path)  # clear the directory
-		os.makedirs(weights_path)
-		buffer_path: str = 'replay_buffers/' + self.color.name
-		if os.path.exists(buffer_path):
-			shutil.rmtree(buffer_path)  # clear the directory
-		os.makedirs(buffer_path)
-		hyperpar_path: str = 'hyper_values/' + self.color.name
-		if os.path.exists(hyperpar_path):
-			shutil.rmtree(hyperpar_path)  # clear the directory
-		os.makedirs(hyperpar_path)
+	def load_weights(self):
+		self.dnn.load_weights(self.weights_path)
+		print(f'Loaded weights from {self.weights_path}')
 
-		# save the values
-		col_time = prefix + self.color.name + datetime.datetime.now().strftime('%y%m%d%H%M%S')
-		path: str = '{}/weights_agent_{}.h5'.format(weights_path, col_time)
-		self.dnn.save(path, overwrite=True)
-
-		path: str = os.path.join(buffer_path, 'replay_buffer_agent_{}.pkl'.format(col_time))
-		self.replay_buffer.persist(path)
-
-		path: str = os.path.join(hyperpar_path, 'vals_{}.pkl'.format(col_time))
-		values = {'n_training_cycles': self.n_training_cycles}
-		pickle.dump(values, open(path, 'wb'))
-
-	def final_save(self) -> None:
-		self._persist_weights('FINAL_')
-
-	def load_weights(self, file_name=None) -> None:
-		color = ('BLACK' if self.color is Color.BLACK else 'WHITE')
-		weights_path = 'network_weights/' + color
-		buffer_path = 'replay_buffers/' + color
-		if file_name is None:
-			all_paths = os.listdir(weights_path)
-			all_paths = sorted(all_paths, reverse=True)
-			path_network = all_paths[0] if len(all_paths) > 0 else None
-			print(path_network)
-			if path_network is None:
-				return
-			path_network = os.path.join(weights_path, path_network)
-			name = os.path.basename(path_network)
-			name = name.replace('.h5', '.pkl')
-			path_replay = name.replace('weights_agent_', 'replay_buffer_agent_')
-			path_replay = os.path.join(buffer_path, path_replay)
-		else:
-			path_network = os.path.join(weights_path, 'weights_agent_' + file_name + '.h5')
-			path_replay = os.path.join(buffer_path, 'replay_buffer_agent_' + file_name + '.pkl')
-
-		self.dnn.load_weights(path_network)  # loading in the action value network weights
-		self.dnn = tf.keras.models.load_model(path_network)
-
-		self.replay_buffer.load(path_replay)
-
-		print('WEIGHTS HAVE BEEN LOADED -> CONTINUING TRAINING')
+	def save_weights(self):
+		self.dnn.save_weights(self.weights_path)
+		print(f'Saved weights to {self.weights_path}')
 
 	@abstractmethod
 	def create_model(self, verbose: bool = False, lr: float = 0.00025) -> Sequential:

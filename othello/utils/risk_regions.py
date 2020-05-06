@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def risk_regions(board_size: int) -> np.array:
+def heur(board_size: int) -> np.array:
 	assert 4 <= board_size <= 12, f'Invalid board size: board_size should be between 4 and 12, but got {board_size}'
 	assert board_size % 2 == 0, f'Invalid board size: board_size should be even, but got {board_size}'
 

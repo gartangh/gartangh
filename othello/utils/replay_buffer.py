@@ -26,9 +26,6 @@ class ReplayBuffer:
 	def clear(self) -> None:
 		self.buffer.clear()
 
-	def persist(self, path) -> None:
-		pickle.dump(self.buffer, open(path, 'wb'))
-
 	def load(self, path) -> None:
 		other_buffer: collections.deque = pickle.load(open(path, 'rb'))
 		if other_buffer.maxlen > self.size:

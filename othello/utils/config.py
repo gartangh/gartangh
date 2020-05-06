@@ -1,4 +1,5 @@
 from math import ceil
+from typing import Union
 
 from agents.agent import Agent
 from agents.trainable_agent import TrainableAgent
@@ -6,8 +7,7 @@ from utils.color import Color
 
 
 class Config:
-	def __init__(self, white: Agent, num_episodes: int, train_white: bool = False, verbose: bool = False,
-	             verbose_live: bool = False) -> None:
+	def __init__(self, white: Agent, num_episodes: int, train_white: bool = False, verbose: bool = False, verbose_live: bool = False) -> None:
 		# check parameters
 		assert white.color is Color.WHITE, f'Invalid white agent: white agent\'s color is not white'
 		if not isinstance(white, TrainableAgent):

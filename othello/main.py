@@ -2,6 +2,7 @@ from typing import List
 
 from agents.agent import Agent
 from agents.cnn_trainable_agent import CNNTrainableAgent
+from agents.dense_trainable_agent import DenseTrainableAgent
 from agents.human_agent import HumanAgent
 from agents.trainable_agent import TrainableAgent
 from agents.untrainable_agent import UntrainableAgent
@@ -14,7 +15,7 @@ from rewards.no_reward import NoReward
 from utils.color import Color
 from utils.config import Config
 from utils.global_config import GlobalConfig
-from utils.risk_regions import risk_regions, bench
+from utils.risk_regions import heur, bench
 
 if __name__ == '__main__':
 	# board size
@@ -23,6 +24,7 @@ if __name__ == '__main__':
 	# trainable black agent
 	black: TrainableAgent = CNNTrainableAgent(
 		color=Color.BLACK,
+		model_name='CNN_against_all',
 		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
 			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
 			start_epsilon=1.0,
@@ -33,9 +35,10 @@ if __name__ == '__main__':
 		board_size=board_size,
 	)
 
-	# white agent
-	white: Agent = CNNTrainableAgent(
+	# white agent for self-play
+	self_play: Agent = CNNTrainableAgent(
 		color=Color.WHITE,
+		model_name='CNN_self_play',
 		train_policy=EpsilonGreedyAnnealingTrainablePolicy(
 			inner_policy=TopKNormalizedTrainablePolicy(board_size=board_size, k=3),
 			start_epsilon=1.0,
@@ -45,17 +48,40 @@ if __name__ == '__main__':
 		final_reward=FixedReward(win=1, draw=0.5, loss=0),
 		board_size=board_size,
 	)
-
 	# share same networks:
-	white.dnn = black.dnn
+	self_play.dnn = black.dnn
 
 	# train strategy
 	train_configs: List[Config] = [
+		# random
+		Config(
+			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
+			train_white=False,
+			num_episodes=2500,
+			verbose=False,
+			verbose_live=False,
+		),
+		# heur
+		Config(
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(heur(board_size))),
+			train_white=False,
+			num_episodes=2500,
+			verbose=False,
+			verbose_live=False,
+		),
+		# bench
+		Config(
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
+			train_white=False,
+			num_episodes=2500,
+			verbose=False,
+			verbose_live=False,
+		),
 		# self play
 		Config(
-			white=white,
+			white=self_play,
 			train_white=True,
-			num_episodes=1000,
+			num_episodes=2500,
 			verbose=False,
 			verbose_live=False,
 		),
@@ -70,7 +96,7 @@ if __name__ == '__main__':
 			verbose_live=False,
 		),
 		Config(
-			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(heur(board_size))),
 			num_episodes=100,
 			verbose=True,
 			verbose_live=False,
@@ -92,7 +118,7 @@ if __name__ == '__main__':
 			verbose_live=False,
 		),
 		Config(
-			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
+			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(heur(board_size))),
 			num_episodes=1000,
 			verbose=True,
 			verbose_live=False,
