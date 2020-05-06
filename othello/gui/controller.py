@@ -2,6 +2,7 @@ import tkinter
 
 from termcolor import colored
 
+from agents.agent import Agent
 from game_logic.game import Game
 from gui.view import View
 from utils.color import Color
@@ -9,8 +10,9 @@ from utils.types import Location, Directions
 
 
 class Controller:
-	def __init__(self, game: Game) -> None:
+	def __init__(self, game: Game, black: Agent) -> None:
 		self.game: Game = game
+		self.black: Agent = black
 		self.gui = None
 		self.legal_actions: dict = self.game.board.get_legal_actions(Color.WHITE)
 		self.prev_pass = False
@@ -24,7 +26,6 @@ class Controller:
 
 	def start(self) -> None:
 		self.gui.startup_gui()
-
 
 	def on_board_clicked(self, event: tkinter.Event) -> None:
 		if not self.done:
@@ -81,7 +82,7 @@ class Controller:
 					self._process_other_turn()
 
 	def _end_game(self) -> None:
-		self.game.config.black.update_score(self.game.board)
+		self.black.update_score(self.game.board)
 		self.game.config.white.update_score(self.game.board)
 		# print end result
 		if self.game.board.num_black_disks > self.game.board.num_white_disks:

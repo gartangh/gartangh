@@ -36,12 +36,12 @@ class TrainableAgent(Agent):
 		self.train_mode: Union[bool, None] = None
 
 		# old and new network to compare training loss
-		self.action_value_network: Sequential = self.create_model()
+		self.dnn: Sequential = self.create_model()
 
 		if load_old_weights:
 			self.load_weights()
 
-		# save the weights of action_value_network periodically, i.e. when
+		# save the weights of deep neural network periodically, i.e. when
 		# self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 		self.persist_weights_every_n_times_trained: int = int(1e3)
 
@@ -61,7 +61,7 @@ class TrainableAgent(Agent):
 
 		states = np.array([self.board_to_nn_input(move[0]) for move in self.replay_buffer.buffer])
 		# the goal is to update these old_q_values
-		old_q_values = self.action_value_network.predict(states)
+		old_q_values = self.dnn.predict(states)
 
 		for i in range(len(self.replay_buffer.buffer) - 1):
 			# get move i: (s, a, r, t)
@@ -85,13 +85,13 @@ class TrainableAgent(Agent):
 		old_q_values[-1, last_action[0] * self.board_size + last_action[1]] = last_reward
 
 		# train the NN on the now updated q_values
-		self.action_value_network.train_on_batch(states, old_q_values)
+		self.dnn.train_on_batch(states, old_q_values)
 
 		if persist_weights and self.n_training_cycles % self.persist_weights_every_n_times_trained == 0:
 			self._persist_weights()
 
 	def next_action(self, board: Board, legal_actions: Actions) -> Action:
-		q_values = self.action_value_network.predict(np.expand_dims(self.board_to_nn_input(board.board), axis=0))
+		q_values = self.dnn.predict(np.expand_dims(self.board_to_nn_input(board.board), axis=0))
 		if self.train_mode:
 			action: Action = self.train_policy.get_action(legal_actions, q_values)
 		else:
@@ -117,7 +117,7 @@ class TrainableAgent(Agent):
 		# save the values
 		col_time = prefix + self.color.name + datetime.datetime.now().strftime('%y%m%d%H%M%S')
 		path: str = '{}/weights_agent_{}.h5'.format(weights_path, col_time)
-		self.action_value_network.save(path, overwrite=True)
+		self.dnn.save(path, overwrite=True)
 
 		path: str = os.path.join(buffer_path, 'replay_buffer_agent_{}.pkl'.format(col_time))
 		self.replay_buffer.persist(path)
@@ -149,8 +149,8 @@ class TrainableAgent(Agent):
 			path_network = os.path.join(weights_path, 'weights_agent_' + file_name + '.h5')
 			path_replay = os.path.join(buffer_path, 'replay_buffer_agent_' + file_name + '.pkl')
 
-		self.action_value_network.load_weights(path_network)  # loading in the action value network weights
-		self.action_value_network = tf.keras.models.load_model(path_network)
+		self.dnn.load_weights(path_network)  # loading in the action value network weights
+		self.dnn = tf.keras.models.load_model(path_network)
 
 		self.replay_buffer.load(path_replay)
 

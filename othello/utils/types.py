@@ -6,3 +6,4 @@ Location = Tuple[int, int]
 Locations = List[Location]
 Action = Tuple[Location, Directions]
 Actions = Dict[Location, Directions]
+

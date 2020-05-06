@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 
 from agents.trainable_agent import TrainableAgent
-from utils.reshapes import split_flatten, flatten_negative
+from utils.reshapes import flatten_negative
 
 
 class DenseTrainableAgent(TrainableAgent):
@@ -19,11 +19,8 @@ class DenseTrainableAgent(TrainableAgent):
 		model: Sequential = Sequential([
 			Input(shape=(self.board_size ** 2)),
 			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),
-			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),
-			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),
-			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),
-			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),
-			Dense(self.board_size ** 2, activation='relu', kernel_initializer='he_uniform'),
+			Dense(self.board_size ** 2 * 2, activation='relu', kernel_initializer='he_uniform'),
+			Dense(self.board_size ** 2 * 4, activation='relu', kernel_initializer='he_uniform'),
 			Dense(self.board_size ** 2, activation='softmax'),
 		])
 		model.compile(loss='mean_squared_error', optimizer=Adam(lr=lr))

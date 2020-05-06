@@ -55,9 +55,6 @@ class Board:
 				directions: Directions = legal_actions[location]
 				self.take_action(location, directions, Color.BLACK)
 
-				if play == num_plays - 1:
-					self.prev_board: np.array = np.copy(board)
-
 				legal_actions = self._get_legal_actions(self.board, self.board_size, Color.WHITE)
 				location: Location = random.choice(list(legal_actions))
 				directions: Directions = legal_actions[location]

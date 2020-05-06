@@ -10,14 +10,15 @@ from utils.types import Actions
 
 
 class Game:
-	def __init__(self, board_size: int, config: Config, episode: int) -> None:
+	def __init__(self, board_size: int, black: Agent, config: Config, episode: int, random_start: bool = False) -> None:
 		self.board_size = board_size
 		self.config: Config = config
 		self.episode: int = episode
 
-		self.board: Board = Board(self.board_size, random_start=config.random_start)
+		self.board: Board = Board(self.board_size, random_start=random_start)
 		self.ply = self.board.num_black_disks + self.board.num_white_disks - 4
-		self.agent: Agent = self.config.black
+		self.black = black
+		self.agent: Agent = black
 		self.prev_pass: bool = False
 		self.done: bool = False
 
@@ -60,8 +61,6 @@ class Game:
 					print(f'\tNext action: {location}')
 				self.prev_pass = False  # this agent has legal actions, no pass
 
-				prev_board = np.copy(self.board.board) if isinstance(self.agent,
-				                                                     TrainableAgent) and self.agent.train_mode else None
 				self.done = self.board.take_action(location, legal_directions, self.agent.color)
 				if self.config.verbose_live:
 					print(self.board)
@@ -73,22 +72,22 @@ class Game:
 						print(f'Immediate reward: {immediate_reward}')
 					# remember the board, the taken action and the resulting reward
 					if isinstance(self.agent, TrainableAgent):
-						self.agent.replay_buffer.add(prev_board, location, immediate_reward, False, list(legal_actions))
+						self.agent.replay_buffer.add(self.board.prev_board, location, immediate_reward, False, list(legal_actions))
 
 			if self.config.verbose_live:
 				print(self.board)
 
 			if not self.done:
 				# change turns
-				self.agent = self.config.black if self.agent == self.config.white else self.config.white
+				self.agent = self.black if self.agent == self.config.white else self.config.white
 			else:
 				# the game is done
 				# update scores of both agents
-				self.config.black.update_score(self.board)
+				self.black.update_score(self.board)
 				self.config.white.update_score(self.board)
 
 				# train the agents on the made moves
-				for agent in [self.config.black, self.config.white]:
+				for agent in [self.black, self.config.white]:
 					if isinstance(agent, TrainableAgent) and agent.train_mode:
 						# use a final reward for winning/losing
 						final_reward: float = agent.final_reward.reward(self.board, agent.color)
