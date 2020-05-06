@@ -1,5 +1,4 @@
 import tkinter
-from typing import List, Tuple
 
 from termcolor import colored
 
@@ -25,6 +24,7 @@ class Controller:
 
 	def start(self) -> None:
 		self.gui.startup_gui()
+
 
 	def on_board_clicked(self, event: tkinter.Event) -> None:
 		if not self.done:

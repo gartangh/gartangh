@@ -23,6 +23,7 @@ from utils.color import Color
 from utils.config import Config
 from utils.plot import Plot
 from utils.risk_regions import risk_regions, bench
+from utils.types import Actions
 
 
 def main() -> None:
@@ -48,6 +49,11 @@ def main() -> None:
 		# create new game
 		game: Game = Game(board_size, config, episode)
 		if isinstance(white, HumanAgent):
+			# let black begin
+			# get legal actions
+			legal_actions: Actions = game.board.get_legal_actions(game.agent.color)
+			location, legal_directions = game.agent.next_action(game.board, legal_actions)
+			game.board.take_action(location, legal_directions, game.agent.color)
 			# create GUI controller
 			controller: Controller = Controller(game)
 			# play game
@@ -69,8 +75,7 @@ def main() -> None:
 			                   config.plot_every_n_episodes)
 
 	ties: int = config.num_episodes - black.num_games_won - white.num_games_won
-	print(f'({black.num_games_won:>4}|{white.num_games_won:>4}|{ties:>4}) / {config.num_episodes:>4}')
-	print(f'win ratio: {black.num_games_won / config.num_episodes}\n')
+	print(f'({black.num_games_won:>4}|{white.num_games_won:>4}|{ties:>4}) / {config.num_episodes:>4} -> win ratio: {black.num_games_won / config.num_episodes * 100:>6.3f} %\n')
 
 	# save models
 	if isinstance(black, TrainableAgent) and black.train_mode:
@@ -130,7 +135,7 @@ if __name__ == '__main__':
 			train_white=True,
 			num_episodes=50_000,
 			plot=plot,
-			plot_win_ratio_live=False,
+			plot_win_ratio_live=True,
 			verbose=False,
 			verbose_live=False,
 			random_start=True,
@@ -175,67 +180,67 @@ if __name__ == '__main__':
 		# 	random_start=True,
 		# ),
 	]
-	for config in train_configs:
-		main()
+	# for config in train_configs:
+	# 	main()
+	#
+	# # after training is complete, save the plot
+	# plot.save_plot()
+	# plot.set_plot_live(False)
 
-	# after training is complete, save the plot
-	plot.save_plot()
-	plot.set_plot_live(False)
-
-	# test strategy
-	test_configs: List[Config] = [
-		Config(
-			black=black,
-			train_black=False,
-			white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
-			train_white=False,
-			num_episodes=1000,
-			plot=None,
-			plot_win_ratio_live=False,
-			verbose=True,
-			verbose_live=False,
-			random_start=False,
-		),
-		Config(
-			black=black,
-			train_black=False,
-			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
-			train_white=False,
-			num_episodes=1000,
-			plot=None,
-			plot_win_ratio_live=False,
-			verbose=True,
-			verbose_live=False,
-			random_start=False,
-		),
-		Config(
-			black=black,
-			train_black=False,
-			white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
-			train_white=False,
-			num_episodes=1000,
-			plot=None,
-			plot_win_ratio_live=False,
-			verbose=True,
-			verbose_live=False,
-			random_start=False,
-		),
-
-	]
-	for config in test_configs:
-		main()
+	# # test strategy
+	# test_configs: List[Config] = [
+	# 	Config(
+	# 		black=black,
+	# 		train_black=False,
+	# 		white=UntrainableAgent(color=Color.WHITE, policy=RandomUntrainablePolicy()),
+	# 		train_white=False,
+	# 		num_episodes=1000,
+	# 		plot=None,
+	# 		plot_win_ratio_live=False,
+	# 		verbose=True,
+	# 		verbose_live=False,
+	# 		random_start=False,
+	# 	),
+	# 	Config(
+	# 		black=black,
+	# 		train_black=False,
+	# 		white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(risk_regions(board_size))),
+	# 		train_white=False,
+	# 		num_episodes=1000,
+	# 		plot=None,
+	# 		plot_win_ratio_live=False,
+	# 		verbose=True,
+	# 		verbose_live=False,
+	# 		random_start=False,
+	# 	),
+	# 	Config(
+	# 		black=black,
+	# 		train_black=False,
+	# 		white=UntrainableAgent(color=Color.WHITE, policy=WeightsUntrainablePolicy(bench(board_size))),
+	# 		train_white=False,
+	# 		num_episodes=1000,
+	# 		plot=None,
+	# 		plot_win_ratio_live=False,
+	# 		verbose=True,
+	# 		verbose_live=False,
+	# 		random_start=False,
+	# 	),
+	#
+	# ]
+	# for config in test_configs:
+	# 	main()
 
 	# play against a human
-	# config: Config = Config(
-	# 	black=black,
-	# 	train_black=False,
-	# 	white=HumanAgent(color=Color.WHITE),
-	# 	train_white=False,
-	# 	num_episodes=3,
-	# 	plot=None,
-	# 	plot_win_ratio_live=False,
-	# 	verbose=True,
-	# 	verbose_live=False,
-	# 	random_start=False,
-	# )
-	# main()
+	config: Config = Config(
+		black=black,
+		train_black=False,
+		white=HumanAgent(color=Color.WHITE),
+		train_white=False,
+		num_episodes=3,
+		plot=None,
+		plot_win_ratio_live=False,
+		verbose=True,
+		verbose_live=False,
+		random_start=False,
+	)
+	main()
