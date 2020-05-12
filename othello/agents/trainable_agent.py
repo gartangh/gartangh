@@ -16,7 +16,7 @@ from utils.types import Action, Actions
 
 class TrainableAgent(Agent):
 	def __init__(self, color: Color, model_name: str, train_policy: TrainablePolicy, immediate_reward: Reward,
-	             final_reward: Reward, board_size: int, discount_factor: float = 0.95) -> None:
+	             final_reward: Reward, board_size: int, discount_factor: float = 1.0) -> None:
 		super().__init__(color)
 
 		self.weights_path: str = f'weights\\{model_name}_{self.color.name}'

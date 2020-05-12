@@ -12,6 +12,7 @@ class Plot:
 	def update(self, episode: int, scores: defaultdict) -> None:
 		self.episodes.append(episode)
 
+		plt.cla()
 		plt.plot(self.episodes, scores['epsilon'], linestyle='--')
 
 		for key, win_ratios in scores.items():
